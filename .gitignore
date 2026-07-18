@@ -1,0 +1,18 @@
+# Référence — clone exploré, pas à versionner ici
+lost-sierra/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+*.log
+
+# Secrets / build (ne jamais commiter)
+.env
+.env.*
+node_modules/
+.cache/
+dist/
+build/
+*.key
+*.pem

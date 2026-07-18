@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a2029">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="">
+    <title>Cap sur la Nouvelle-Écosse · 27 juil – 9 août 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..48,500..800&family=Spline+Sans:wght@300..600&family=Spline+Sans+Mono:wght@400..600&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           « CARTE MARINE » — sea-chart identity for a Nova Scotia trip.
+           Old template variable names kept (inline styles depend on them);
+           values remapped to a nautical chart palette.
+             --pine  = steel chart-blue (headings)   --pine-deep = title-block navy
+             --clay  = buoy red (the one bold pop)    --clay-deep = link/coral
+             --amber = compass brass (grid + labels)  --slate     = sea-glass green
+           ============================================================ */
+
+        /* DARK = default, "chart at dusk" */
+        :root {
+            --bg: #0d2733;
+            --surface: #123845;
+            --surface-2: #0f2f3b;
+            --ink: #eaf1f1;
+            --ink-soft: #90a9ae;
+            --pine: #8bb6c8;
+            --pine-deep: #0a2029;
+            --clay: #ec5445;
+            --clay-deep: #f08b7d;
+            --amber: #e0ad45;
+            --slate: #6bb89b;
+            --line: rgba(224, 173, 69, .20);
+            --line-soft: rgba(224, 173, 69, .11);
+            --grid: rgba(224, 173, 69, .06);
+            --shadow: 0 2px 14px rgba(0, 0, 0, .35);
+            color-scheme: dark;
+        }
+
+        /* LIGHT = "chart on linen" — cool sea-mist, never cream */
+        body[data-theme="light"] {
+            --bg: #dae7e7;
+            --surface: #eff5f4;
+            --surface-2: #cddedf;
+            --ink: #0f2e39;
+            --ink-soft: #47616a;
+            --pine: #124a5f;
+            --pine-deep: #0b2733;
+            --clay: #c2352a;
+            --clay-deep: #9a251b;
+            --amber: #9c6412;
+            --slate: #2f7d5e;
+            --line: rgba(15, 46, 57, .16);
+            --line-soft: rgba(15, 46, 57, .08);
+            --grid: rgba(15, 46, 57, .05);
+            --shadow: 0 2px 12px rgba(15, 46, 57, .10);
+            color-scheme: light;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+            .card:hover { transform: none; }
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Spline Sans', sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            font-size: 15.5px;
+            -webkit-font-smoothing: antialiased;
+            transition: background .4s ease, color .4s ease;
+        }
+
+        .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; width: 100%; }
+
+        h1, h2, h3 {
+            font-family: 'Bricolage Grotesque', sans-serif;
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -.015em;
+            text-wrap: balance;
+        }
+
+        .mono, .k, .v, .jr b, .eyebrow, .grouplabel, .ct, .tlabel,
+        table.cal td[data-l="Distance"], table.cal td[data-l="Durée"] {
+            font-family: 'Spline Sans Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        a { color: var(--clay-deep); }
+
+        /* ---- HEADER : chart title-block ---- */
+        header {
+            position: relative;
+            background: var(--pine-deep);
+            color: #eaf1f1;
+            padding: 44px 0 36px;
+            overflow: hidden;
+            border-bottom: 1px solid var(--line);
+        }
+        /* faint brass coordinate grid + compass ring */
+        header::before {
+            content: "";
+            position: absolute; inset: 0;
+            background-image:
+                radial-gradient(circle at 84% 42%, transparent 0 78px, rgba(224,173,69,.10) 78px 79px, transparent 80px),
+                radial-gradient(circle at 84% 42%, transparent 0 52px, rgba(224,173,69,.08) 52px 53px, transparent 54px),
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            pointer-events: none;
+        }
+        /* compass needle mark, top-right */
+        header::after {
+            content: "N ▲";
+            position: absolute; top: 30px; right: 15%;
+            font-family: 'Spline Sans Mono', monospace;
+            font-size: 11px; font-weight: 600; letter-spacing: .2em;
+            color: var(--amber); opacity: .8;
+        }
+        header .wrap { position: relative; z-index: 1; }
+
+        header .eyebrow {
+            font-size: 11px; font-weight: 600; letter-spacing: .22em;
+            text-transform: uppercase; color: var(--amber);
+        }
+        header h1 {
+            font-size: clamp(2.1rem, 5.4vw, 3.1rem);
+            font-weight: 800;
+            color: #f2f7f6; margin: 10px 0 6px;
+        }
+        header .sub { color: #b3c6c9; font-weight: 300; font-size: 15px; max-width: 60ch; }
+
+        .keyfacts {
+            margin-top: 26px;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            border: 1px solid rgba(224, 173, 69, .28);
+            border-radius: 4px; overflow: hidden;
+        }
+        .keyfacts div { padding: 13px 15px; border-left: 1px solid rgba(224, 173, 69, .18); }
+        .keyfacts div:first-child { border-left: none; }
+        .keyfacts .k {
+            font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+            color: var(--amber); font-weight: 600;
+        }
+        .keyfacts .v {
+            font-weight: 600; font-size: 1rem; color: #f2f7f6; margin-top: 4px; letter-spacing: -.01em;
+        }
+
+        /* ---- STICKY SECTION NAV ---- */
+        .section-nav {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--pine-deep) 92%, transparent);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navwrap {
+            max-width: 940px; margin: 0 auto; padding: 0 14px;
+            display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+        }
+        .navwrap::-webkit-scrollbar { display: none; }
+        .section-nav a {
+            font-family: 'Spline Sans Mono', monospace;
+            font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em;
+            color: #b3c6c9; text-decoration: none; white-space: nowrap;
+            padding: 13px 12px; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
+        }
+        .section-nav a:hover { color: #f2f7f6; }
+        .section-nav a.active { color: var(--amber); border-bottom-color: var(--clay); }
+
+        /* ---- SECTIONS ---- */
+        section { padding: 44px 0; border-bottom: 1px solid var(--line-soft); }
+        section:last-of-type { border-bottom: none; }
+
+        .sh { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-bottom: 22px; }
+        .sh .num {
+            font-family: 'Spline Sans Mono', monospace; font-weight: 600;
+            color: #fff; background: var(--clay);
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex: 0 0 auto; font-size: 13px;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--amber) 35%, transparent);
+        }
+        .sh h2 { font-size: 1.5rem; color: var(--ink); }
+        .sh .note {
+            margin-left: auto; font-size: 11px; color: var(--amber);
+            font-family: 'Spline Sans Mono', monospace; text-transform: uppercase; letter-spacing: .08em;
+            text-align: right;
+        }
+
+        /* ---- CALENDAR / DATA TABLES ---- */
+        .calwrap { overflow-x: auto; border-radius: 6px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+        table.cal { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+        table.cal thead th {
+            font-family: 'Spline Sans Mono', monospace; font-weight: 600; font-size: 10.5px;
+            text-transform: uppercase; letter-spacing: .08em;
+            background: var(--pine-deep); color: var(--amber);
+            padding: 12px 14px; text-align: left; white-space: nowrap;
+        }
+        table.cal td { padding: 13px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink-soft); }
+        table.cal tbody tr:last-child td { border-bottom: none; }
+        table.cal tbody tr:hover td { background: color-mix(in srgb, var(--amber) 6%, transparent); }
+        table.cal .jr b { font-family: 'Spline Sans Mono', monospace; font-weight: 600; color: var(--clay); display: block; font-size: 14px; }
+        table.cal .jr span { display: block; font-size: 10px; color: var(--ink-soft); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+        table.cal .ride b, table.cal td b { color: var(--ink); font-weight: 600; }
+        table.cal td[data-l="Distance"], table.cal td[data-l="Durée"] { color: var(--ink); font-size: 13px; white-space: nowrap; }
+        table.cal .none { font-style: italic; opacity: .8; }
+        table.cal tr.coda td { background: var(--surface-2); }
+        table.cal tr.coda .jr b { color: var(--slate); }
+
+        /* ---- CARD GRIDS ---- */
+        .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .card {
+            background: var(--surface); border: 1px solid var(--line);
+            border-top: 2px solid var(--pine); border-radius: 6px; padding: 18px 20px;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+        .card.clay { border-top-color: var(--clay); }
+        .card.slate { border-top-color: var(--slate); }
+        .card .ct { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--amber); }
+        .card h3 { font-size: 1.16rem; color: var(--ink); margin: 6px 0 3px; }
+        .card .meta { font-size: 12px; color: var(--slate); margin-bottom: 10px; font-family: 'Spline Sans Mono', monospace; }
+        .card p { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 5px; }
+        .card p b { color: var(--ink); font-weight: 600; }
+
+        /* ---- DRIVE LEGS / DAY LIST ---- */
+        .legs { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); }
+        .leg { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+        .leg:last-child { border-bottom: none; }
+        .leg .lr { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; color: var(--ink); flex: 1; }
+        .leg .lt { font-family: 'Spline Sans Mono', monospace; font-weight: 600; color: var(--slate); white-space: nowrap; }
+        .drow { display: block; }
+        .dv { display: block; font-size: 13.8px; color: var(--ink-soft); }
+        .dv b { color: var(--ink); }
+
+        /* ---- STATUS LIST (reservations) ---- */
+        .grouplabel { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--amber); margin-bottom: 8px; }
+        .grouplabel.second { margin-top: 26px; }
+        .statuslist { list-style: none; }
+        .statuslist li { position: relative; padding: 11px 0 11px 34px; border-bottom: 1px solid var(--line-soft); font-size: 13.8px; color: var(--ink-soft); }
+        .statuslist li:last-child { border-bottom: none; }
+        .statuslist li::before { position: absolute; left: 0; top: 11px; width: 20px; height: 20px; border-radius: 4px; text-align: center; line-height: 19px; font-size: 12px; font-weight: 700; }
+        .statuslist li.done::before { content: "\2713"; background: var(--slate); color: var(--pine-deep); }
+        .statuslist li.todo::before { content: ""; border: 1.5px solid var(--ink-soft); }
+        .statuslist li b { color: var(--ink); font-weight: 600; }
+        .statuslist li .sub { display: block; font-size: 12.3px; color: var(--ink-soft); }
+
+        .callout {
+            background: var(--surface-2); border: 1px solid var(--line);
+            border-left: 3px solid var(--amber); border-radius: 4px;
+            padding: 14px 18px; font-size: 13px; color: var(--ink-soft); margin-top: 18px;
+        }
+        .callout b { color: var(--ink); font-weight: 600; }
+
+        /* ---- TERRAIN / DÉCOR ---- */
+        .terr { border-left: 2px solid var(--clay); padding: 2px 0 2px 20px; margin-bottom: 26px; }
+        .terr:last-child { margin-bottom: 0; }
+        .grid2 .terr { margin-bottom: 0; }
+        .grid2 .terr p { max-width: none; }
+        .terr .tlabel { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--amber); }
+        .terr h3 { font-size: 1.24rem; color: var(--ink); margin: 5px 0 9px; }
+        .terr p { font-size: 14px; color: var(--ink-soft); margin-bottom: 9px; max-width: 68ch; }
+        .terr p:last-child { margin-bottom: 0; }
+        .terr p b { color: var(--ink); font-weight: 600; }
+
+        /* ---- LEXIQUE ---- */
+        .lex { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); }
+        .lex td { padding: 11px 15px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+        .lex tr:last-child td { border-bottom: none; }
+        .lex .lt { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; color: var(--pine); width: 26%; }
+        .lex .ld { color: var(--ink-soft); }
+
+        /* ---- ROADMAP (trajets) ---- */
+        .roadmap { padding-left: 28px; position: relative; }
+        .roadmap::before { content: ''; position: absolute; left: 9px; top: 22px; bottom: 22px; width: 2px; background: repeating-linear-gradient(var(--line) 0 6px, transparent 6px 12px); }
+        .rstop { position: relative; padding: 16px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; color: var(--ink-soft); }
+        .rstop:last-child { border-bottom: none; }
+        .rstop b { color: var(--ink); }
+        .roadmap .rstop::before {
+            content: attr(data-n); position: absolute; left: -28px; top: 17px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--surface); border: 2px solid var(--clay); color: var(--clay);
+            font-family: 'Spline Sans Mono', monospace; font-size: 10px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .map-link { color: var(--amber); font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .map-link:hover { text-decoration: underline; }
+
+        /* ---- MAP ---- */
+        #map { touch-action: pan-y; }
+        #map.map-active { touch-action: none; }
+        .custom-map-icon { background: none; border: none; }
+        /* Tint the basemap toward the chart palette — tiles only, markers/routes untouched.
+           Grey/near-grey tiles carry no hue, so sepia() injects one, then hue-rotate() steers
+           it to teal-navy and saturate() makes it read. Tuned per theme. */
+        .leaflet-tile-pane { filter: brightness(.82) sepia(.5) hue-rotate(158deg) saturate(2) contrast(1.04); }
+        body[data-theme="light"] .leaflet-tile-pane { filter: grayscale(.4) sepia(.32) hue-rotate(155deg) saturate(.72) brightness(1.03) contrast(.96); }
+        .leaflet-popup-content-wrapper { background: var(--surface); color: var(--ink); border-radius: 6px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+        .leaflet-popup-content { color: var(--ink); font-family: 'Spline Sans', sans-serif; }
+        .leaflet-popup-content strong { color: var(--ink); font-family: 'Bricolage Grotesque', sans-serif; }
+        .leaflet-popup-content .pop-desc { font-size: 12px; color: var(--ink-soft); }
+        .leaflet-popup-close-button { color: var(--ink-soft) !important; }
+        .leaflet-popup-tip { background: var(--surface); }
+        .leaflet-container { background: var(--surface-2); }
+        .leaflet-bar a { background: var(--surface); color: var(--ink); border-bottom-color: var(--line); }
+        .leaflet-bar a:hover { background: var(--surface-2); }
+
+        /* ---- THEME SELECTOR ---- */
+        .theme-selector { border: 1px solid rgba(224, 173, 69, .3); border-radius: 20px; display: inline-flex; padding: 2px; gap: 2px; align-items: center; background: rgba(0, 0, 0, .2); }
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 3px 8px; border-radius: 16px; line-height: 1; opacity: .55; transition: opacity .2s, background .2s; }
+        .theme-btn.active { opacity: 1; background: rgba(224, 173, 69, .18); }
+
+        /* ---- BACK TO TOP ---- */
+        .back-to-top {
+            position: fixed; bottom: 22px; right: 22px; z-index: 60;
+            width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+            background: var(--clay); color: #fff; font-size: 20px; cursor: pointer;
+            box-shadow: var(--shadow); opacity: 0; pointer-events: none;
+            transform: translateY(8px); transition: opacity .25s, transform .25s;
+        }
+        .back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+        /* ---- RESPONSIVE : tables collapse to labelled cards ---- */
+        @media (max-width: 640px) {
+            .grid3, .grid2 { grid-template-columns: 1fr; }
+            .keyfacts { grid-template-columns: 1fr 1fr; }
+            .keyfacts div:nth-child(-n+2) { border-bottom: 1px solid rgba(224, 173, 69, .18); }
+            .keyfacts div:nth-child(odd) { border-left: none; }
+            table.cal thead { display: none; }
+            table.cal, table.cal tbody, table.cal tr, table.cal td { display: block; width: 100%; }
+            table.cal tr { border-bottom: 2px solid var(--line); padding: 6px 0; }
+            table.cal tr:last-child { border-bottom: none; }
+            table.cal td { border: none; padding: 5px 14px; }
+            table.cal td[data-l]::before {
+                content: attr(data-l) " · "; font-family: 'Spline Sans Mono', monospace;
+                font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+                color: var(--amber); font-weight: 600;
+            }
+            table.cal td.jr::before { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="wrap">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px;">
+                <div class="eyebrow">Plan du voyage · road trip camping</div>
+                <div style="display: flex; gap: 12px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; align-items: center; flex-wrap: wrap;">
+                    <div class="theme-selector" role="group" aria-label="Thème">
+                        <button class="theme-btn" data-theme="light" title="Thème clair" aria-label="Thème clair" aria-pressed="false">☀️</button>
+                        <button class="theme-btn active" data-theme="dark" title="Thème sombre" aria-label="Thème sombre" aria-pressed="true">🌙</button>
+                    </div>
+                    <span id="status-badge" style="color: #6fa888; border: 1px solid rgba(111, 168, 136, 0.3); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 5px; transition: all 0.3s ease; margin-left: 4px;"><span style="width: 6px; height: 6px; background-color: #6fa888; border-radius: 50%; display: inline-block;"></span><span id="status-text">En ligne</span></span>
+                </div>
+            </div>
+            <h1>Cap sur la Nouvelle-Écosse</h1>
+            <div class="sub">Québec → Cap-Breton → Halifax → baie de Fundy. Itinéraire, campings, attraits et réservations.</div>
+            <div class="keyfacts">
+                <div>
+                    <div class="k">Dates</div>
+                    <div class="v">27 juil – 9 août 2026</div>
+                </div>
+                <div>
+                    <div class="k">Durée</div>
+                    <div class="v">14 jours · 13 nuits</div>
+                </div>
+                <div>
+                    <div class="k">Route</div>
+                    <div class="v">~3 800 km</div>
+                </div>
+                <div>
+                    <div class="k">Budget</div>
+                    <div class="v">~3 050 $</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- STICKY SECTION NAV -->
+    <nav class="section-nav" aria-label="Sections">
+        <div class="navwrap">
+            <a href="#apercu">En bref</a>
+            <a href="#cal">Calendrier</a>
+            <a href="#jour">Par jour</a>
+            <a href="#hebergement">Hébergements</a>
+            <a href="#attraits">Attraits</a>
+            <a href="#trajets">Trajets</a>
+            <a href="#map-section">Carte</a>
+            <a href="#distances">Distances</a>
+            <a href="#decor">Décor</a>
+            <a href="#lexique">Lexique</a>
+        </div>
+    </nav>
+
+    <!-- 1 - EN BREF -->
+    <section id="apercu">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">1</div>
+                <h2>En bref</h2>
+                <div class="note">3 régions · 8 nuits camping · 5 nuits hôtel</div>
+            </div>
+            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Un grand tour de la Nouvelle-Écosse au départ de Québec : deux longues journées de route pour rejoindre l'île du Cap-Breton, une semaine à camper entre l'Acadie de Chéticamp, les hautes-terres du Cabot Trail et la forteresse de Louisbourg, puis Halifax comme port d'attache pour la côte sud (Lunenburg, Peggy's Cove), avant de refermer la boucle par les marées géantes de la baie de Fundy.</p>
+            <div class="grid3">
+                <div class="card">
+                    <div class="ct">Étape 1 · J1–J7</div>
+                    <h3>Île du Cap-Breton</h3>
+                    <div class="meta">Mira · Louisbourg · Ingonish · Chéticamp</div>
+                    <p>Camping tout le long. Forteresse de Louisbourg, musée Graham Bell, Skyline Trail et la pointe sauvage de Meat Cove.</p>
+                </div>
+                <div class="card clay">
+                    <div class="ct">Étape 2 · J8–J11</div>
+                    <h3>Halifax & côte sud</h3>
+                    <div class="meta">4 nuits · port d'attache</div>
+                    <p>Base à l'hôtel. Lunenburg (UNESCO), Peggy's Cove, plages de Clam Harbour et le vieux Halifax.</p>
+                </div>
+                <div class="card slate">
+                    <div class="ct">Étape 3 · J12–J14</div>
+                    <h3>Baie de Fundy</h3>
+                    <div class="meta">Camping Point Wolfe · retour</div>
+                    <p>Les plus hautes marées du monde à Hopewell Rocks, puis la longue route du retour vers la maison.</p>
+                </div>
+            </div>
+            <div class="callout">
+                <b>Réservations — tout est confirmé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits d'hôtel (Moncton + Halifax ×4) sont réservés. Détail des emplacements à la section <a class="map-link" href="#hebergement">Hébergements</a>.
+            </div>
+        </div>
+    </section>
+
+    <!-- 2 - CALENDRIER -->
+    <section id="cal">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">2</div>
+                <h2>Calendrier</h2>
+                <div class="note">27 juil → 9 août 2026</div>
+            </div>
+            <div class="calwrap">
+                <table class="cal">
+                    <thead>
+                        <tr>
+                            <th>Jour</th>
+                            <th>Trajet</th>
+                            <th>Attrait de la journée</th>
+                            <th>Coucher</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="jr"><b>J1</b><span>Lun 27 juil</span></td>
+                            <td data-l="Trajet">Québec → Moncton · 750 km (~7 h 30, 10 h avec arrêts)</td>
+                            <td class="ride" data-l="Attrait"><span class="none">- longue route, arrivée en soirée</span></td>
+                            <td data-l="Coucher">Hôtel, Moncton</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J2</b><span>Mar 28 juil</span></td>
+                            <td data-l="Trajet">Moncton → Mira River P.P. · 500 km (~5 h 30, 10 h)</td>
+                            <td class="ride" data-l="Attrait"><b>Baddeck</b> — musée Alexander Graham Bell (lieu historique national, ~2 h)</td>
+                            <td data-l="Coucher">Camping Mira River</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J3</b><span>Mer 29 juil</span></td>
+                            <td data-l="Trajet">Mira → Louisbourg · 40 km (~0 h 30)</td>
+                            <td class="ride" data-l="Attrait"><b>Forteresse de Louisbourg</b> · point de débarquement de Wolfe</td>
+                            <td data-l="Coucher">Camping Mira River</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J4</b><span>Jeu 30 juil</span></td>
+                            <td data-l="Trajet">Mira → Broad Cove · 165 km (~2 h 30)</td>
+                            <td class="ride" data-l="Attrait"><b>Plage de Broad Cove</b> · sentier d'1 h au camping</td>
+                            <td data-l="Coucher">Camping Broad Cove (empl. #99-101)</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J5</b><span>Ven 31 juil</span></td>
+                            <td data-l="Trajet">Boucle nord · 150 km (~2 h 30)</td>
+                            <td class="ride" data-l="Attrait">Exploration du secteur de la pointe — jusqu'à <b>Meat Cove</b></td>
+                            <td data-l="Coucher">Camping Broad Cove</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J6</b><span>Sam 1 août</span></td>
+                            <td data-l="Trajet">Broad Cove → Chéticamp · 110 km (~2 h, 6 h avec arrêts)</td>
+                            <td class="ride" data-l="Attrait"><b>Skyline Trail</b> — le belvédère du Cabot Trail</td>
+                            <td data-l="Coucher">Camping Chéticamp (empl. #81-83)</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J7</b><span>Dim 2 août</span></td>
+                            <td data-l="Trajet">-</td>
+                            <td class="ride" data-l="Attrait">Journée Chéticamp — village acadien, côte du Cabot Trail</td>
+                            <td data-l="Coucher">Camping Chéticamp</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J8</b><span>Lun 3 août</span></td>
+                            <td data-l="Trajet">Chéticamp → Halifax · 500 km (~6 h, 10 h)</td>
+                            <td class="ride" data-l="Attrait"><span class="none">- route de transfert vers la côte sud</span></td>
+                            <td data-l="Coucher">Hôtel, Halifax</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J9</b><span>Mar 4 août</span></td>
+                            <td data-l="Trajet">-</td>
+                            <td class="ride" data-l="Attrait"><b>Halifax</b> — citadelle, front de mer, jardins publics</td>
+                            <td data-l="Coucher">Hôtel, Halifax</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J10</b><span>Mer 5 août</span></td>
+                            <td data-l="Trajet">Boucle côte sud (~200 km)</td>
+                            <td class="ride" data-l="Attrait"><b>Lunenburg</b> (UNESCO) · <b>Peggy's Cove</b></td>
+                            <td data-l="Coucher">Hôtel, Halifax</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J11</b><span>Jeu 6 août</span></td>
+                            <td data-l="Trajet">Côte est (~120 km)</td>
+                            <td class="ride" data-l="Attrait"><b>Clam Harbour</b> — plages de sable blanc</td>
+                            <td data-l="Coucher">Hôtel, Halifax</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J12</b><span>Ven 7 août</span></td>
+                            <td data-l="Trajet">Halifax → baie de Fundy · 350 km (~3 h 30, 5 h)</td>
+                            <td class="ride" data-l="Attrait"><b>Hopewell Rocks</b> — les « pots de fleurs » de la marée</td>
+                            <td data-l="Coucher">Camping Point Wolfe (empl. G#33-34)</td>
+                        </tr>
+                        <tr>
+                            <td class="jr"><b>J13</b><span>Sam 8 août</span></td>
+                            <td data-l="Trajet">-</td>
+                            <td class="ride" data-l="Attrait">Parc national Fundy — sentiers côtiers, marée haute / marée basse</td>
+                            <td data-l="Coucher">Camping Point Wolfe</td>
+                        </tr>
+                        <tr class="coda">
+                            <td class="jr"><b>J14</b><span>Dim 9 août</span></td>
+                            <td data-l="Trajet">Baie de Fundy → maison · 750 km (~7 h 30)</td>
+                            <td class="ride none" data-l="Attrait">Retour</td>
+                            <td data-l="Coucher">Maison</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3 - PAR JOUR -->
+    <section id="jour">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">3</div>
+                <h2>Par jour</h2>
+                <div class="note">déplacements & repères</div>
+            </div>
+
+            <div class="legs" style="display:block;padding:4px 0;">
+                <div class="rstop" data-n="1" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J1 · Lun 27 juil</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Québec → Moncton</h3>
+                    <div class="drow"><span class="dv">Grande étape de mise en route : <b>750 km</b>, ~7 h 30 de route pure (10 h avec les arrêts). Nuit à l'hôtel à Moncton. · <a class="map-link" data-leg="drive-j1" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="2" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J2 · Mar 28 juil</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Moncton → Cap-Breton (Mira River)</h3>
+                    <div class="drow"><span class="dv"><b>500 km</b>, ~5 h 30. Arrêt à <b>Baddeck</b> pour le musée Alexander Graham Bell (~2 h). Installation au camping de Mira River. · <a class="map-link" data-leg="drive-j2" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="3" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J3 · Mer 29 juil</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Forteresse de Louisbourg</h3>
+                    <div class="drow"><span class="dv">Courte navette depuis Mira (<b>40 km</b>). Journée à la forteresse reconstituée et au point de débarquement de Wolfe. Retour camper à Mira. · <a class="map-link" data-leg="drive-j3" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="4" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J4 · Jeu 30 juil</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Mira → Broad Cove (Ingonish)</h3>
+                    <div class="drow"><span class="dv"><b>165 km</b>, ~2 h 30, on entre dans le parc national des Hautes-Terres-du-Cap-Breton. Plage de Broad Cove, sentier d'1 h au camping (empl. #99-101). · <a class="map-link" data-leg="drive-j4" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="5" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J5 · Ven 31 juil</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">La pointe nord — Meat Cove</h3>
+                    <div class="drow"><span class="dv">Boucle libre (~150 km) jusqu'au bout de l'île, à <b>Meat Cove</b> : le camping le plus au nord de la Nouvelle-Écosse, falaises et baleines. · <a class="map-link" data-leg="drive-j5" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="6" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J6 · Sam 1 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Broad Cove → Chéticamp</h3>
+                    <div class="drow"><span class="dv"><b>110 km</b>, ~2 h (6 h avec arrêts) par le Cabot Trail. En chemin, le <b>Skyline Trail</b>. Deux nuits au camping de Chéticamp (empl. #81-83). · <a class="map-link" data-leg="drive-j6" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="7" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J7 · Dim 2 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Journée acadienne à Chéticamp</h3>
+                    <div class="drow"><span class="dv">Sans voiture : village acadien, tapis hookés, côte du Cabot Trail et coucher de soleil sur le golfe. <span class="none">- pas de déplacement</span></span></div>
+                </div>
+                <div class="rstop" data-n="8" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J8 · Lun 3 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Chéticamp → Halifax</h3>
+                    <div class="drow"><span class="dv">Grande journée de transfert : <b>500 km</b>, ~6 h (10 h avec arrêts). Fin du camping, arrivée à l'hôtel à Halifax pour 4 nuits. · <a class="map-link" data-leg="drive-j8" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="9" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J9–J11 · 4–6 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Halifax & la côte sud</h3>
+                    <div class="drow"><span class="dv">Halifax en base fixe. Boucles à la journée : <b>Lunenburg + Peggy's Cove</b> (J10, ~200 km) et <b>Clam Harbour</b> (J11, plages, ~120 km). · <a class="map-link" data-leg="drive-j10" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="10" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
+                    <div class="grouplabel">J12 · Ven 7 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Halifax → baie de Fundy</h3>
+                    <div class="drow"><span class="dv"><b>350 km</b>, ~3 h 30 (5 h). Hopewell Rocks à marée basse, puis camping à Point Wolfe, parc national Fundy (empl. G#33-34). · <a class="map-link" data-leg="drive-j12" href="#map-section">Carte 📍</a></span></div>
+                </div>
+                <div class="rstop" data-n="11" style="padding:16px 20px;">
+                    <div class="grouplabel">J13–J14 · 8–9 août</div>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">Fundy, puis retour</h3>
+                    <div class="drow"><span class="dv">Une journée pleine à Fundy (marée haute / marée basse, sentiers côtiers), puis le long retour vers la maison le 9 : <b>750 km</b>, ~7 h 30. · <a class="map-link" data-leg="drive-j14" href="#map-section">Carte 📍</a></span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4 - HÉBERGEMENTS -->
+    <section id="hebergement">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">4</div>
+                <h2>Hébergements</h2>
+                <div class="note">campings & hôtels</div>
+            </div>
+            <div class="grouplabel">Campings — tout réservé</div>
+            <ul class="statuslist">
+                <li class="done"><b>Camping Mira River</b> — parc provincial · 28–29 juil (2 nuits) <span class="sub">Réservé · parks.novascotia.ca</span></li>
+                <li class="done"><b>Camping Broad Cove</b> — Ingonish, Hautes-Terres-du-Cap-Breton, empl. #99-101 · 30–31 juil <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
+                <li class="done"><b>Camping Chéticamp</b> — Hautes-Terres-du-Cap-Breton, empl. #81-83 · 1–2 août <span class="sub">Réservé · un emplacement tente + un avec service</span></li>
+                <li class="done"><b>Camping Point Wolfe</b> — parc national Fundy, empl. G#33-34 · 7–8 août <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
+            </ul>
+            <div class="grouplabel second">Hôtels — tout réservé</div>
+            <ul class="statuslist">
+                <li class="done"><b>Moncton</b> · 27 juil (1 nuit) <span class="sub">Réservé · ~250 $</span></li>
+                <li class="done"><b>Halifax</b> · 3–6 août (4 nuits) <span class="sub">Réservé · ~500 $/nuit · base de la côte sud</span></li>
+                <li class="done"><b>Retour</b> · nuit du 9 août à la maison <span class="sub">Fin du voyage</span></li>
+            </ul>
+            <div class="callout">
+                <b>Tout est réservé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits d'hôtel (Moncton, Halifax ×4) sont confirmés. Emplacements notés ci-dessus — garder les confirmations hors-ligne.
+            </div>
+        </div>
+    </section>
+
+    <!-- 5 - ATTRAITS & SENTIERS -->
+    <section id="attraits" style="background:var(--surface-2);border-top:1px solid var(--line);">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">5</div>
+                <h2>Attraits & sentiers</h2>
+                <div class="note">à ne pas manquer</div>
+            </div>
+            <div class="grid3">
+                <div class="card">
+                    <div class="ct">J2 · Baddeck</div>
+                    <h3>Musée Graham Bell</h3>
+                    <div class="meta">Lieu historique national · ~2 h</div>
+                    <p>L'atelier de l'inventeur du téléphone, ses hydravions et cerfs-volants géants, face au lac Bras d'Or.</p>
+                </div>
+                <div class="card clay">
+                    <div class="ct">J3 · Louisbourg</div>
+                    <h3>Forteresse de Louisbourg</h3>
+                    <div class="meta">Plus grande reconstitution en Amérique du Nord</div>
+                    <p>Une ville-forteresse française de 1744 rebâtie à l'identique, gardes en costume et canons face à l'Atlantique.</p>
+                </div>
+                <div class="card slate">
+                    <div class="ct">J5 · Pointe nord</div>
+                    <h3>Meat Cove</h3>
+                    <div class="meta">Bout de l'île · route de gravier</div>
+                    <p>Falaises, phoques et baleines au village le plus au nord. Panoramas parmi les plus sauvages du Cap-Breton.</p>
+                </div>
+                <div class="card slate">
+                    <div class="ct">J6 · Cabot Trail</div>
+                    <h3>Skyline Trail</h3>
+                    <div class="meta">Boucle ~8,2 km · 2–3 h</div>
+                    <p>Le sentier-carte-postale : une passerelle en escalier vers l'océan, orignaux et coucher de soleil sur le golfe.</p>
+                </div>
+                <div class="card">
+                    <div class="ct">J10 · Côte sud</div>
+                    <h3>Lunenburg & Peggy's Cove</h3>
+                    <div class="meta">UNESCO · phare emblématique</div>
+                    <p>Les façades rouges du vieux port classé, puis le phare sur les rochers de granit lisses de Peggy's Cove.</p>
+                </div>
+                <div class="card clay">
+                    <div class="ct">J12 · Fundy</div>
+                    <h3>Hopewell Rocks</h3>
+                    <div class="meta">Marée de ~12 m</div>
+                    <p>Les « pots de fleurs » : on marche sur le fond de l'océan à marée basse, on y fait du kayak à marée haute.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6 - TRAJETS & ADRESSES -->
+    <section id="trajets">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">6</div>
+                <h2>Trajets & adresses clés</h2>
+                <div class="note">itinéraire GMaps</div>
+            </div>
+            <div class="roadmap">
+                <div class="rstop" data-n="1">
+                    <b>Québec → Moncton</b> · 750 km, ~7 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J1 — Transcanadienne 20 / 2 vers le Nouveau-Brunswick</span><br>
+                    <a class="trk-a" style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Quebec+City&destination=Moncton+NB&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j1" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="2">
+                    <b>Moncton → Mira River (via Baddeck)</b> · 500 km, ~5 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J2 — pont de la Confédération non requis ; route 104 → chaussée de Canso → Cap-Breton</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Moncton+NB&destination=Mira+River+Provincial+Park&waypoints=Baddeck+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j2" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="3">
+                    <b>Mira → Forteresse de Louisbourg</b> · 40 km, ~0 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J3 — aller-retour dans la journée</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Mira+River+Provincial+Park&destination=Fortress+of+Louisbourg&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j3" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="4">
+                    <b>Mira → Broad Cove (Ingonish)</b> · 165 km, ~2 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J4 — entrée est du parc des Hautes-Terres</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Mira+River+Provincial+Park&destination=Broad+Cove+Campground+Ingonish&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j4" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="5">
+                    <b>Broad Cove → Chéticamp</b> · 110 km, ~2 h<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J6 — la moitié ouest du Cabot Trail, via Skyline Trail</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Broad+Cove+Campground+Ingonish&destination=Cheticamp+Campground&waypoints=Skyline+Trail&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j6" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="6">
+                    <b>Chéticamp → Halifax</b> · 500 km, ~6 h<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J8 — sortie du Cap-Breton vers la capitale</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Cheticamp+NS&destination=Halifax+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j8" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="7">
+                    <b>Halifax → Lunenburg → Peggy's Cove</b> · boucle ~200 km<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J10 — Route 3 / 333, la côte sud</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Halifax+NS&destination=Halifax+NS&waypoints=Lunenburg+NS|Peggys+Cove+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j10" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="8">
+                    <b>Halifax → baie de Fundy (Point Wolfe)</b> · 350 km, ~3 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J12 — via Hopewell Rocks, puis parc national Fundy</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Halifax+NS&destination=Point+Wolfe+Campground+Fundy&waypoints=Hopewell+Rocks&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j12" href="#map-section">Carte 📍</a>
+                </div>
+                <div class="rstop" data-n="9">
+                    <b>Baie de Fundy → maison</b> · 750 km, ~7 h 30<br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J14 — le grand retour</span><br>
+                    <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Fundy+National+Park&destination=Quebec+City&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j14" href="#map-section">Carte 📍</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7 - CARTE -->
+    <section id="map-section" style="background:var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">7</div>
+                <h2>Carte interactive</h2>
+                <div class="note">étapes & trajets · hors-ligne</div>
+            </div>
+            <div id="map" style="height: 480px; border-radius: 6px; border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; z-index: 1;"></div>
+            <p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px;">Touchez « Carte 📍 » dans l'itinéraire pour zoomer sur une étape. Les tracés sont approximatifs (aperçu), à confirmer sur GMaps. 🎯 = ma position · ⤢ = tout afficher.</p>
+        </div>
+    </section>
+
+    <!-- 8 - DISTANCES -->
+    <section id="distances">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">8</div>
+                <h2>Distances & durées</h2>
+                <div class="note">route pure · avec arrêts</div>
+            </div>
+            <div class="calwrap">
+                <table class="cal">
+                    <thead>
+                        <tr>
+                            <th>Étape</th>
+                            <th>Trajet</th>
+                            <th>Distance</th>
+                            <th>Durée</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="jr"><b>J1</b></td><td data-l="Trajet">Québec → Moncton</td><td data-l="Distance">750 km</td><td data-l="Durée">7 h 30 · 10 h</td></tr>
+                        <tr><td class="jr"><b>J2</b></td><td data-l="Trajet">Moncton → Mira River</td><td data-l="Distance">500 km</td><td data-l="Durée">5 h 30 · 10 h</td></tr>
+                        <tr><td class="jr"><b>J3</b></td><td data-l="Trajet">Mira → Louisbourg</td><td data-l="Distance">40 km</td><td data-l="Durée">0 h 30</td></tr>
+                        <tr><td class="jr"><b>J4</b></td><td data-l="Trajet">Mira → Broad Cove</td><td data-l="Distance">165 km</td><td data-l="Durée">2 h 30</td></tr>
+                        <tr><td class="jr"><b>J5</b></td><td data-l="Trajet">Boucle Meat Cove</td><td data-l="Distance">150 km</td><td data-l="Durée">2 h 30</td></tr>
+                        <tr><td class="jr"><b>J6</b></td><td data-l="Trajet">Broad Cove → Chéticamp</td><td data-l="Distance">110 km</td><td data-l="Durée">2 h · 6 h</td></tr>
+                        <tr><td class="jr"><b>J8</b></td><td data-l="Trajet">Chéticamp → Halifax</td><td data-l="Distance">500 km</td><td data-l="Durée">6 h · 10 h</td></tr>
+                        <tr><td class="jr"><b>J12</b></td><td data-l="Trajet">Halifax → baie de Fundy</td><td data-l="Distance">350 km</td><td data-l="Durée">3 h 30 · 5 h</td></tr>
+                        <tr class="coda"><td class="jr"><b>J14</b></td><td data-l="Trajet">Baie de Fundy → maison</td><td data-l="Distance">750 km</td><td data-l="Durée">7 h 30</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="callout"><b>Total route</b> : ~3 315 km sur les grandes étapes, ~3 800 km avec les boucles à la journée. Trois journées « transfert » de 6 h et plus : J1, J2 et J8.</div>
+        </div>
+    </section>
+
+    <!-- 9 - LE DÉCOR -->
+    <section id="decor" style="background:var(--surface-2);border-top:1px solid var(--line);">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">9</div>
+                <h2>Le décor : histoire, géographie, géologie</h2>
+                <div class="note">au fil de l'itinéraire</div>
+            </div>
+            <p style="max-width:68ch;color:var(--ink-soft);margin-bottom:26px;">Les notes suivent l'ordre du voyage — chaque escale a sa couche d'histoire, de la Nouvelle-France à l'Écosse des Highlands, et sa géologie, du plateau appalachien aux plus hautes marées du monde.</p>
+
+            <div class="grid2" style="gap:26px 22px;">
+            <div class="terr">
+                <div class="tlabel">J2 · Baddeck</div>
+                <h3>Graham Bell & la mer intérieure du Bras d'Or</h3>
+                <p>Alexander Graham Bell, inventeur du téléphone, passa ses étés à <b>Beinn Bhreagh</b>, son domaine face à Baddeck. C'est sur la glace du <b>lac Bras d'Or</b> que son équipe fit voler le <b>Silver Dart</b> en février 1909 : le premier vol motorisé de l'Empire britannique. Le Bras d'Or lui-même est une curiosité — une <b>mer intérieure salée</b> au cœur de l'île, aujourd'hui réserve de biosphère de l'UNESCO, où l'eau douce des rivières se mêle à l'Atlantique.</p>
+            </div>
+            <div class="terr">
+                <div class="tlabel">J3 · Louisbourg</div>
+                <h3>Louisbourg, verrou de la Nouvelle-France</h3>
+                <p>Quand le traité d'Utrecht (1713) cède l'Acadie continentale aux Britanniques, la France garde l'<b>Île Royale</b> (le Cap-Breton) et y bâtit Louisbourg pour verrouiller l'accès au Saint-Laurent et protéger la lucrative <b>pêche à la morue</b>. La place tombe une première fois en 1745 devant des miliciens de Nouvelle-Angleterre, est rendue par traité, puis assiégée et prise en <b>1758</b> par Amherst et un jeune <b>Wolfe</b> — répétition générale de la chute de Québec l'année suivante.</p>
+                <p>Les Britanniques rasent la forteresse. Dans les années 1960, un <b>quart de la ville a été reconstruit pierre par pierre</b> — un chantier qui a réemployé les mineurs de charbon de la région. C'est la plus grande reconstitution historique en Amérique du Nord.</p>
+            </div>
+            <div class="terr">
+                <div class="tlabel">J4–J6 · Cabot Trail</div>
+                <h3>Les Hautes-Terres, plateau appalachien</h3>
+                <p>Le parc protège l'extrémité nord de la <b>chaîne des Appalaches</b> : un vieux plateau raboté par les glaciers, coiffé d'une <b>taïga de landes</b> battue par le vent, qui plonge d'un coup dans le golfe du Saint-Laurent le long de la <b>faille de l'Aspy</b>. Ouvert en 1932, le <b>Cabot Trail</b> (~300 km) épouse ces falaises ; on y croise orignaux et pygargues à tête blanche. Les colons <b>gaéliques d'Écosse</b>, arrivés après les Highland Clearances du début du XIX<sup>e</sup> siècle, ont donné son nom à la province — « Nouvelle-Écosse » — et leur langue survit encore dans les <b>ceilidhs</b>, les veillées de musique.</p>
+            </div>
+            <div class="terr">
+                <div class="tlabel">J6–J7 · Chéticamp</div>
+                <h3>Chéticamp, l'Acadie qui a résisté</h3>
+                <p>Le <b>Grand Dérangement</b> (1755–1764) déporte quelque 11 000 Acadiens. Certains reviennent : Chéticamp est fondé en 1785 par « les Quatorze Vieux », des familles rescapées. Isolé derrière les montagnes, le village a gardé son <b>français acadien</b> comme langue du quotidien et une tradition mondialement connue de <b>tapis hookés</b>. Deux nuits ici, tout en français, au pied du Cabot Trail.</p>
+            </div>
+            <div class="terr">
+                <div class="tlabel">J10 · Côte sud</div>
+                <h3>Lunenburg, le Bluenose & le granit de Peggy's Cove</h3>
+                <p><b>Lunenburg</b> est fondée en 1753 par des « <b>protestants étrangers</b> » — Allemands, Suisses, Montbéliardais — recrutés par la Couronne. Sa vieille ville colorée, la mieux préservée d'Amérique du Nord britannique, est <b>inscrite à l'UNESCO</b> depuis 1995 ; c'est le port d'attache du <b>Bluenose</b>, le voilier de course invaincu qui figure sur la pièce de dix cents canadienne. Plus près d'Halifax, le phare de <b>Peggy's Cove</b> se dresse sur un granit lisse et rose vieux de <b>~415 millions d'années</b>, poli par les glaciers et semé de blocs erratiques. Superbe — mais les rochers noirs mouillés par la houle sont mortels : on n'y descend pas.</p>
+            </div>
+            <div class="terr">
+                <div class="tlabel">J12–J13 · Baie de Fundy</div>
+                <h3>Les plus hautes marées du monde</h3>
+                <p>La baie a une longueur telle que sa <b>période d'oscillation naturelle (~13 h)</b> coïncide presque avec le cycle des marées (12 h 25) : l'onde entre en <b>résonance</b> et se creuse. Résultat, jusqu'à <b>16 m d'amplitude</b> à Burntcoat Head — un immeuble de cinq étages, deux fois par jour, et près de <b>160 milliards de tonnes d'eau</b> qui entrent et sortent à chaque marée.</p>
+                <p>À <b>Hopewell Rocks</b>, cette érosion a sculpté les « <b>pots de fleurs</b> », des piliers de grès coiffés d'épinettes : on marche à leur pied sur le fond de l'océan à marée basse, on y pagaie six heures plus tard. Le même phénomène pousse un <b>mascaret</b> (une vague de marée) à remonter les rivières de la région.</p>
+            </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10 - LEXIQUE -->
+    <section id="lexique">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">10</div>
+                <h2>Lexique</h2>
+                <div class="note">repères du voyage</div>
+            </div>
+            <div class="grouplabel">Culture, histoire & géographie</div>
+            <table class="lex">
+                <tr><td class="lt">Cabot Trail</td><td class="ld">Route panoramique de ~300 km qui fait le tour des Hautes-Terres du Cap-Breton.</td></tr>
+                <tr><td class="lt">Bras d'Or</td><td class="ld">Grande mer intérieure salée au cœur du Cap-Breton, classée réserve de biosphère.</td></tr>
+                <tr><td class="lt">Ceilidh</td><td class="ld">(prononcer « kéli ») Veillée de musique et de danse traditionnelles d'origine gaélique.</td></tr>
+                <tr><td class="lt">Grand Dérangement</td><td class="ld">Déportation des Acadiens par les Britanniques à partir de 1755.</td></tr>
+                <tr><td class="lt">Marée / estran</td><td class="ld">À Fundy, l'estran (zone découverte à marée basse) peut s'étendre sur des centaines de mètres.</td></tr>
+                <tr><td class="lt">Flowerpot rocks</td><td class="ld">« Pots de fleurs » : piliers de grès coiffés d'arbres, sculptés par la marée à Hopewell.</td></tr>
+                <tr><td class="lt">Chaussée de Canso</td><td class="ld">Digue-route reliant la Nouvelle-Écosse continentale à l'île du Cap-Breton.</td></tr>
+                <tr><td class="lt">Empl.</td><td class="ld">Emplacement de camping (numéro réservé).</td></tr>
+            </table>
+
+            <div class="grouplabel second">Parcs Canada & lieux historiques</div>
+            <table class="lex">
+                <tr><td class="lt">Parcs Canada</td><td class="ld">Le premier service de parcs nationaux au monde (1911). Deux de ses joyaux jalonnent la route : les Hautes-Terres et Fundy.</td></tr>
+                <tr><td class="lt">P.N. des Hautes-Terres-du-Cap-Breton</td><td class="ld">« Là où les montagnes rencontrent la mer » (1936) : un plateau de landes subarctiques, des orignaux à touche-touche, et le tiers le plus vertigineux du Cabot Trail (J4–J7).</td></tr>
+                <tr><td class="lt">P.N. Fundy</td><td class="ld">Deux fois par jour, l'océan se retire de 12 m et découvre le fond de la baie ; le reste du temps, forêt, chutes et l'un des ciels les plus noirs de l'Est (1948, J12–J13).</td></tr>
+                <tr><td class="lt">Lieu historique national (LHN)</td><td class="ld">L'histoire mise en scène : à Louisbourg, des figurants en costume de 1744 t'interpellent aux portes ; à Baddeck, les machines volantes de Bell veillent sur le lac du Silver Dart.</td></tr>
+                <tr><td class="lt">Laissez-passer Découverte</td><td class="ld">Une carte, tous les parcs et LHN du pays pendant un an. Avec 2 parcs + 2 LHN sur le trajet, il se rembourse avant même le Cap-Breton.</td></tr>
+                <tr><td class="lt">Forêt acadienne</td><td class="ld">Ni tout à fait boréale, ni tout à fait feuillue : un entre-deux rare (érable, bouleau jaune, pruche) qui a presque disparu ailleurs — Fundy en garde un fragment intact.</td></tr>
+                <tr><td class="lt">Réserve de ciel étoilé</td><td class="ld">À Fundy, on bride l'éclairage pour rendre la nuit au ciel : par temps clair, la Voie lactée se lit à l'œil nu. Statut officiel depuis 2011.</td></tr>
+                <tr><td class="lt">oTENTik</td><td class="ld">Le camping sans monter la tente : une structure en A sur plancher de bois, vrais lits et poêle — la trouvaille de Parcs Canada entre la toile et le chalet.</td></tr>
+                <tr><td class="lt">Barrens (landes)</td><td class="ld">Sur le plateau du Cap-Breton, le vent taille les épinettes en bonsaïs : un paysage subarctique à la latitude de Bordeaux.</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Retour en haut" title="Retour en haut">↑</button>
+
+    <footer style="background:var(--pine-deep);color:#e9e0c9;text-align:center;padding:22px 0;font-size:12.5px;">
+        Plan du voyage · Nouvelle-Écosse · 27 juillet – 9 août 2026 · fonctionne hors-ligne
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').setView([45.8, -63.5], 6);
+
+            const isDark = document.body.getAttribute('data-theme') !== 'light';
+            const initialTiles = isDark
+                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            window.mapTileLayer = L.tileLayer(initialTiles, {
+                maxZoom: 18,
+                attribution: '© OpenStreetMap contributors, © CARTO'
+            }).addTo(map);
+
+            let mapLayers = null;
+            let allBounds = null;
+
+            const DRIVE_COLOR = '#a5241f';   // rouge Lunenburg
+            const TRAIL_COLOR = '#3d6b4f';   // vert bardeau
+            const HL_COLOR = '#d9a12c';      // ocre (surbrillance)
+
+            fetch('./map-data.geojson')
+                .then(res => res.json())
+                .then(geojsonData => {
+                    mapLayers = L.geoJSON(geojsonData, {
+                        style: (feature) => {
+                            if (feature.properties.type === 'drive') {
+                                return { color: DRIVE_COLOR, weight: 4, opacity: 0.8, dashArray: '6, 6' };
+                            } else if (feature.properties.type === 'trail') {
+                                return { color: TRAIL_COLOR, weight: 5, opacity: 0.9 };
+                            }
+                            return { color: '#24506b', weight: 3 };
+                        },
+                        pointToLayer: (feature, latlng) => {
+                            let emoji = '📍';
+                            let color = '#a5241f';
+                            const name = feature.properties.name || '';
+                            if (/Camping|Park|Parc/i.test(name)) {
+                                emoji = '⛺'; color = '#3d6b4f';
+                            } else if (/Hôtel|Hotel|Halifax|Moncton/i.test(name)) {
+                                emoji = '🏨'; color = '#24506b';
+                            } else if (/Forteresse|Fort|Musée|Bell/i.test(name)) {
+                                emoji = '🏛️'; color = '#d9a12c';
+                            } else if (/Trail|Sentier|Skyline/i.test(name)) {
+                                emoji = '🥾'; color = '#7f180f';
+                            } else if (/Cove|Rocks|Plage|Peggy/i.test(name)) {
+                                emoji = '🌊'; color = '#24506b';
+                            }
+
+                            const customIcon = L.divIcon({
+                                html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 14px;">${emoji}</div>`,
+                                className: 'custom-map-icon',
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            });
+                            return L.marker(latlng, { icon: customIcon });
+                        },
+                        onEachFeature: (feature, layer) => {
+                            if (feature.properties && feature.properties.name) {
+                                let popupContent = `<strong>${feature.properties.name}</strong>`;
+                                if (feature.properties.description) {
+                                    popupContent += `<br><span class="pop-desc">${feature.properties.description}</span>`;
+                                }
+                                layer.bindPopup(popupContent);
+                            }
+                        }
+                    }).addTo(map);
+                    allBounds = mapLayers.getBounds();
+                    if (allBounds.isValid()) map.fitBounds(allBounds, { padding: [30, 30] });
+                })
+                .catch(err => console.error('Error loading map data:', err));
+
+            // Contrôle "ma position"
+            L.Control.Location = L.Control.extend({
+                onAdd: function(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const button = L.DomUtil.create('a', '', container);
+                    button.innerHTML = '🎯';
+                    button.href = '#';
+                    button.title = 'Ma position';
+                    button.style.cssText = 'font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+                    let locMarker = null;
+                    L.DomEvent.on(button, 'click', function(e) {
+                        L.DomEvent.stopPropagation(e);
+                        L.DomEvent.preventDefault(e);
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition((position) => {
+                                const latlng = [position.coords.latitude, position.coords.longitude];
+                                if (locMarker) { locMarker.setLatLng(latlng); }
+                                else {
+                                    locMarker = L.circleMarker(latlng, { radius: 8, fillColor: '#3897f0', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9 }).addTo(map);
+                                }
+                                map.setView(latlng, 12);
+                            }, (err) => { alert('Impossible de récupérer la position : ' + err.message); });
+                        } else { alert('Géolocalisation non supportée.'); }
+                    });
+                    return container;
+                }
+            });
+            new L.Control.Location({ position: 'topleft' }).addTo(map);
+
+            // Contrôle "tout afficher"
+            L.Control.FitAll = L.Control.extend({
+                onAdd: function(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const button = L.DomUtil.create('a', '', container);
+                    button.innerHTML = '⤢';
+                    button.href = '#';
+                    button.title = 'Tout afficher';
+                    button.style.cssText = 'font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+                    L.DomEvent.on(button, 'click', function(e) {
+                        L.DomEvent.stopPropagation(e);
+                        L.DomEvent.preventDefault(e);
+                        if (allBounds && allBounds.isValid()) { map.fitBounds(allBounds, { padding: [30, 30] }); }
+                        else { map.setView([45.8, -63.5], 6); }
+                    });
+                    return container;
+                }
+            });
+            new L.Control.FitAll({ position: 'topleft' }).addTo(map);
+
+            // Clics sur "Carte 📍" : centrer + surligner le trajet
+            document.querySelectorAll('.map-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const legId = link.getAttribute('data-leg');
+                    if (!legId || !mapLayers) return;
+                    mapLayers.eachLayer(layer => {
+                        if (layer.feature && layer.feature.properties && layer.feature.properties.legId === legId) {
+                            layer.setStyle({ color: HL_COLOR, weight: 6, opacity: 1 });
+                            setTimeout(() => { layer.setStyle({ color: DRIVE_COLOR, weight: 4, opacity: 0.8 }); }, 3000);
+                            if (layer.getBounds) { map.fitBounds(layer.getBounds(), { padding: [50, 50] }); }
+                            layer.openPopup();
+                        }
+                    });
+                });
+            });
+
+            // Gestes mobiles : un doigt = défilement, deux doigts = carte
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                map.dragging.disable();
+                const mapEl = document.getElementById('map');
+                const hint = document.createElement('div');
+                hint.textContent = '🤏 Deux doigts pour naviguer';
+                hint.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:401;background:rgba(0,0,0,.55);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .25s;text-align:center;white-space:nowrap;';
+                mapEl.appendChild(hint);
+                let hintTimer;
+                mapEl.addEventListener('touchstart', (e) => {
+                    if (e.touches.length >= 2) {
+                        mapEl.classList.add('map-active'); map.dragging.enable(); hint.style.opacity = '0';
+                    } else {
+                        mapEl.classList.remove('map-active'); hint.style.opacity = '1';
+                        clearTimeout(hintTimer); hintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1500);
+                    }
+                }, { passive: true });
+                mapEl.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) { mapEl.classList.remove('map-active'); map.dragging.disable(); }
+                }, { passive: true });
+            }
+        });
+    </script>
+
+    <!-- THÈME CLAIR / SOMBRE -->
+    <script>
+        (function() {
+            const themeButtons = document.querySelectorAll('.theme-btn');
+            function applyTheme(themeName) {
+                document.body.setAttribute('data-theme', themeName);
+                localStorage.setItem('nova-scotia-theme', themeName);
+                themeButtons.forEach(btn => {
+                    const isActive = btn.getAttribute('data-theme') === themeName;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+                if (window.mapTileLayer) {
+                    const newTileUrl = themeName === 'dark'
+                        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                    window.mapTileLayer.setUrl(newTileUrl);
+                }
+            }
+            themeButtons.forEach(btn => btn.addEventListener('click', () => applyTheme(btn.getAttribute('data-theme'))));
+            const savedTheme = localStorage.getItem('nova-scotia-theme');
+            const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            applyTheme(savedTheme || (prefersLight ? 'light' : 'dark'));
+        })();
+    </script>
+
+    <!-- SERVICE WORKER + STATUT RÉSEAU -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered.', reg))
+                    .catch(err => console.log('Service Worker registration failed.', err));
+            });
+        }
+        const statusBadge = document.getElementById('status-badge');
+        if (statusBadge) {
+            const statusText = document.getElementById('status-text');
+            const updateStatus = () => {
+                const dot = statusBadge.querySelector('span');
+                if (navigator.onLine) {
+                    statusBadge.style.color = '#6fa888';
+                    statusBadge.style.borderColor = 'rgba(111, 168, 136, 0.3)';
+                    dot.style.backgroundColor = '#6fa888';
+                    if (statusText) statusText.textContent = 'En ligne';
+                } else {
+                    statusBadge.style.color = '#a5241f';
+                    statusBadge.style.borderColor = 'rgba(165, 36, 31, 0.35)';
+                    dot.style.backgroundColor = '#a5241f';
+                    if (statusText) statusText.textContent = 'Hors-ligne';
+                }
+            };
+            window.addEventListener('online', updateStatus);
+            window.addEventListener('offline', updateStatus);
+            updateStatus();
+        }
+    </script>
+
+    <!-- SCROLLSPY + RETOUR EN HAUT -->
+    <script>
+        (function() {
+            const btt = document.getElementById('back-to-top');
+            if (btt) {
+                const toggleBtt = () => btt.classList.toggle('show', window.scrollY > 600);
+                window.addEventListener('scroll', toggleBtt, { passive: true });
+                btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+                toggleBtt();
+            }
+            const navLinks = Array.from(document.querySelectorAll('.section-nav a'));
+            if (navLinks.length && 'IntersectionObserver' in window) {
+                const byId = {};
+                navLinks.forEach(a => { byId[a.getAttribute('href').slice(1)] = a; });
+                const sections = navLinks.map(a => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+                let current = null;
+                const setActive = (id) => {
+                    if (id === current) return;
+                    current = id;
+                    navLinks.forEach(a => a.classList.remove('active'));
+                    const link = byId[id];
+                    if (link) {
+                        link.classList.add('active');
+                        const navWrap = link.closest('.navwrap');
+                        if (navWrap) {
+                            const lr = link.getBoundingClientRect();
+                            const wr = navWrap.getBoundingClientRect();
+                            if (lr.right > wr.right) navWrap.scrollLeft += lr.right - wr.right + 12;
+                            else if (lr.left < wr.left) navWrap.scrollLeft -= wr.left - lr.left + 12;
+                        }
+                    }
+                };
+                const observer = new IntersectionObserver((entries) => {
+                    const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+                    if (visible.length) setActive(visible[0].target.id);
+                }, { rootMargin: '-52px 0px -55% 0px', threshold: [0.1, 0.5] });
+                sections.forEach(s => observer.observe(s));
+            }
+        })();
+    </script>
+
+</body>
+
+</html>
