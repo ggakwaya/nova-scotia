@@ -218,7 +218,6 @@
         table.cal tr.coda .jr b { color: var(--slate); }
         .velo-summary { color: var(--ink); }
         .velo-summary.pending { color: var(--ink-soft); font-style: italic; }
-        .velo-normal { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
         .velo-hourly { margin-top: 8px; }
         .velo-hourly summary { cursor: pointer; font-size: 12px; color: var(--clay-deep); font-weight: 600; }
         table.velo-hourly-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
@@ -1347,11 +1346,32 @@
                 const windGust = d.wind_gusts_10m_max[idx];
                 const code = d.weather_code[idx];
 
-                let html = '<div class="velo-summary">' +
-                    Math.round(tmin) + '–' + Math.round(tmax) + ' °C · vent ' + Math.round(windMax) +
-                    ' km/h (rafales ' + Math.round(windGust) + ') · pluie ' + precipSum.toFixed(1) +
-                    ' mm (' + Math.round(precipProb) + '% de proba) · ' + condLabel(code) +
-                    ' <span style="color:var(--ink-soft);">-- ECMWF/IFS</span></div>';
+                const normal = normalsByLocation ? normalsByLocation[locKey(lat, lon)] : null;
+
+                function delta(value, normalMean) {
+                    const diff = Math.round(value) - Math.round(normalMean);
+                    return (diff >= 0 ? '+' : '') + diff;
+                }
+
+                let html;
+                if (normal) {
+                    html = '<div class="velo-summary">' +
+                        Math.round(tmin) + '–' + Math.round(tmax) + ' °C (normale ' + Math.round(normal.tempMinMean) + '–' +
+                        Math.round(normal.tempMaxMean) + ' °C, écart ' + delta(tmax, normal.tempMaxMean) + ' °C sur le max) · vent ' +
+                        Math.round(windMax) + ' km/h (normale ' + Math.round(normal.windMean) + ' km/h, ' + delta(windMax, normal.windMean) + ') · rafales ' +
+                        Math.round(windGust) + ' km/h (normale ' + Math.round(normal.gustMean) + ' km/h, ' + delta(windGust, normal.gustMean) +
+                        ' ; déjà vu jusqu\'à ' + Math.round(normal.gustRecord) + ' km/h) · pluie ' + precipSum.toFixed(1) +
+                        ' mm (normale ' + normal.precipMean.toFixed(1) + ' mm/j) · ' + Math.round(precipProb) +
+                        '% de proba (' + normal.rainyPct + '% des jours normalement ≥ 1 mm) · ' + condLabel(code) +
+                        ' <span style="color:var(--ink-soft);">-- ECMWF/IFS vs normale ' + NORMAL_START_YEAR + '-' + NORMAL_END_YEAR +
+                        ' (± ' + NORMAL_WINDOW_DAYS + ' j, n=' + normal.n + ', ERA5)</span></div>';
+                } else {
+                    html = '<div class="velo-summary">' +
+                        Math.round(tmin) + '–' + Math.round(tmax) + ' °C · vent ' + Math.round(windMax) +
+                        ' km/h (rafales ' + Math.round(windGust) + ') · pluie ' + precipSum.toFixed(1) +
+                        ' mm (' + Math.round(precipProb) + '% de proba) · ' + condLabel(code) +
+                        ' <span style="color:var(--ink-soft);">-- ECMWF/IFS · normale historique en cours de chargement…</span></div>';
+                }
 
                 if (mb && mb.days && mb.days[date]) {
                     const m = mb.days[date];
@@ -1359,17 +1379,6 @@
                         Math.round(m.temp_min) + '–' + Math.round(m.temp_max) + ' °C · vent ' + Math.round(m.wind_max) +
                         ' km/h · pluie ' + Number(m.precip_mm).toFixed(1) + ' mm (' + Math.round(m.precip_prob) +
                         '% de proba) <span style="color:var(--ink-soft);">-- Meteoblue (mLM)</span></div>';
-                }
-
-                const normal = normalsByLocation ? normalsByLocation[locKey(lat, lon)] : null;
-                if (normal) {
-                    html += '<div class="velo-normal">Normale ' + NORMAL_START_YEAR + '-' + NORMAL_END_YEAR + ' (± ' + NORMAL_WINDOW_DAYS + ' j, n=' + normal.n + ') : ' +
-                        Math.round(normal.tempMinMean) + '–' + Math.round(normal.tempMaxMean) + ' °C (déjà vu : ' +
-                        Math.round(normal.tempMinMin) + ' à ' + Math.round(normal.tempMaxMax) + ' °C) · vent moy ' +
-                        Math.round(normal.windMean) + ' km/h, rafales moy ' + Math.round(normal.gustMean) +
-                        ' km/h (record du secteur : ' + Math.round(normal.gustRecord) + ' km/h) · pluie moy ' +
-                        normal.precipMean.toFixed(1) + ' mm/j, ' + normal.rainyPct + '% des jours avec ≥ 1 mm ' +
-                        '<span style="color:var(--ink-soft);">-- ERA5, archive-api.open-meteo.com</span></div>';
                 }
 
                 html += hourlyTableHtml(data.hourly, date);
