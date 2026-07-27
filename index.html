@@ -218,6 +218,19 @@
         table.cal tr.coda .jr b { color: var(--slate); }
         .velo-summary { color: var(--ink); }
         .velo-summary.pending { color: var(--ink-soft); font-style: italic; }
+        .velo-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 760px) { .velo-charts { grid-template-columns: 1fr; } .velo-chart-legend { flex-direction: column; gap: 4px; } }
+        .velo-chart-block { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px 12px; box-shadow: var(--shadow); }
+        .velo-chart-title { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+        .velo-chart-wrap { width: 100%; overflow-x: auto; }
+        svg.velo-chart { width: 100%; height: auto; display: block; min-width: 480px; }
+        .velo-chart text { font-family: 'Spline Sans Mono', monospace; fill: var(--ink-soft); font-size: 10px; }
+        .velo-chart .axis-line { stroke: var(--line); stroke-width: 1; }
+        .velo-chart .grid-line { stroke: var(--line-soft); stroke-width: 1; }
+        .velo-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12px; color: var(--ink-soft); }
+        .velo-chart-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+        .velo-tooltip { position: fixed; z-index: 40; background: var(--pine-deep); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px; font-size: 12px; line-height: 1.5; pointer-events: none; box-shadow: var(--shadow); max-width: 260px; }
+        .velo-tooltip b { color: var(--amber); }
         .velo-hourly { margin-top: 8px; }
         .velo-hourly summary { cursor: pointer; font-size: 12px; color: var(--clay-deep); font-weight: 600; }
         table.velo-hourly-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
@@ -902,6 +915,21 @@
                 <div class="note">ECMWF (Open-Meteo) · aucune interprétation, juste les chiffres</div>
             </div>
             <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Toutes les données viennent telles quelles du modèle ECMWF, sans jugement de notre part sur ce qui fait une bonne journée de vélo -- c'est à toi de trancher. Chaque jour affiche le résumé quotidien, une comparaison à la normale saisonnière locale (2016-2025, ± 3 jours, données historiques ERA5) puisqu'un secteur côtier a ses propres repères de « normal », et un détail horaire dépliable (6 h-21 h). Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
+
+            <div class="velo-charts">
+                <div class="velo-chart-block">
+                    <div class="velo-chart-title">Température -- prévision vs normale locale</div>
+                    <div class="velo-chart-wrap"><svg id="velo-chart-temp" class="velo-chart" viewBox="0 0 880 260" preserveAspectRatio="xMidYMid meet"></svg></div>
+                    <div class="velo-chart-legend" id="velo-legend-temp"></div>
+                </div>
+                <div class="velo-chart-block">
+                    <div class="velo-chart-title">Rafales de vent -- prévision vs normale locale</div>
+                    <div class="velo-chart-wrap"><svg id="velo-chart-gust" class="velo-chart" viewBox="0 0 880 260" preserveAspectRatio="xMidYMid meet"></svg></div>
+                    <div class="velo-chart-legend" id="velo-legend-gust"></div>
+                </div>
+            </div>
+            <div id="velo-tooltip" class="velo-tooltip" hidden></div>
+
             <div class="calwrap">
                 <table class="cal" id="velo-table">
                     <thead>
@@ -1386,8 +1414,197 @@
                 forecastCell.className = 'velo-forecast';
             }
 
+            // -- GRAPHIQUES : prévision vs normale locale (température, rafales) --
+            // Deux graphiques distincts (jamais un double axe -- °C et km/h n'ont
+            // pas la même échelle) ; même grammaire visuelle : accent = prévision,
+            // gris = repère historique.
+            const CHART_W = 880, CHART_H = 260;
+            const CHART_MARGIN = { top: 14, right: 14, bottom: 30, left: 32 };
+
+            function xPos(i, n) {
+                const plotW = CHART_W - CHART_MARGIN.left - CHART_MARGIN.right;
+                return n <= 1 ? CHART_MARGIN.left + plotW / 2 : CHART_MARGIN.left + (i * plotW) / (n - 1);
+            }
+            function yPos(v, yMin, yMax) {
+                const plotH = CHART_H - CHART_MARGIN.top - CHART_MARGIN.bottom;
+                const t = (v - yMin) / ((yMax - yMin) || 1);
+                return CHART_MARGIN.top + plotH * (1 - t);
+            }
+            function niceTicks(yMin, yMax, count) {
+                const range = (yMax - yMin) || 1;
+                const rawStep = range / (count - 1);
+                const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                const norm = rawStep / mag;
+                const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+                const start = Math.ceil(yMin / step) * step;
+                const ticks = [];
+                for (let v = start; v <= yMax; v += step) ticks.push(Math.round(v * 100) / 100);
+                return ticks;
+            }
+            function buildAreaPath(xs, topVals, bottomVals, yMin, yMax) {
+                const idxs = xs.map((_, i) => i).filter(i => topVals[i] != null && bottomVals[i] != null);
+                if (!idxs.length) return '';
+                let d = '';
+                idxs.forEach((i, k) => { d += (k === 0 ? 'M' : 'L') + xs[i] + ',' + yPos(topVals[i], yMin, yMax); });
+                for (let k = idxs.length - 1; k >= 0; k--) { d += 'L' + xs[idxs[k]] + ',' + yPos(bottomVals[idxs[k]], yMin, yMax); }
+                return d + 'Z';
+            }
+            function buildLinePath(xs, vals, yMin, yMax) {
+                let d = '';
+                xs.forEach((x, i) => { if (vals[i] == null) return; d += (d === '' ? 'M' : 'L') + x + ',' + yPos(vals[i], yMin, yMax); });
+                return d;
+            }
+            function buildAxes(yMin, yMax, jours) {
+                let s = '';
+                niceTicks(yMin, yMax, 4).forEach(t => {
+                    const y = yPos(t, yMin, yMax);
+                    s += '<line class="grid-line" x1="' + CHART_MARGIN.left + '" x2="' + (CHART_W - CHART_MARGIN.right) + '" y1="' + y + '" y2="' + y + '"></line>';
+                    s += '<text x="' + (CHART_MARGIN.left - 6) + '" y="' + (y + 3) + '" text-anchor="end">' + t + '</text>';
+                });
+                s += '<line class="axis-line" x1="' + CHART_MARGIN.left + '" x2="' + CHART_MARGIN.left + '" y1="' + CHART_MARGIN.top + '" y2="' + (CHART_H - CHART_MARGIN.bottom) + '"></line>';
+                s += '<line class="axis-line" x1="' + CHART_MARGIN.left + '" x2="' + (CHART_W - CHART_MARGIN.right) + '" y1="' + (CHART_H - CHART_MARGIN.bottom) + '" y2="' + (CHART_H - CHART_MARGIN.bottom) + '"></line>';
+                jours.forEach((j, i) => {
+                    s += '<text x="' + xPos(i, jours.length) + '" y="' + (CHART_H - CHART_MARGIN.bottom + 15) + '" text-anchor="middle">' + j + '</text>';
+                });
+                return s;
+            }
+            function buildHoverZones(xs, n) {
+                const plotW = CHART_W - CHART_MARGIN.left - CHART_MARGIN.right;
+                const slice = plotW / n;
+                let s = '';
+                xs.forEach((x, i) => {
+                    s += '<rect class="hover-zone" data-idx="' + i + '" x="' + (CHART_MARGIN.left + i * slice) + '" y="' + CHART_MARGIN.top +
+                        '" width="' + slice + '" height="' + (CHART_H - CHART_MARGIN.top - CHART_MARGIN.bottom) + '" fill="transparent" style="cursor:crosshair;"></rect>';
+                });
+                s += '<line class="crosshair" x1="0" x2="0" y1="' + CHART_MARGIN.top + '" y2="' + (CHART_H - CHART_MARGIN.bottom) + '" stroke="var(--ink-soft)" stroke-width="1" opacity="0"></line>';
+                return s;
+            }
+            function attachHover(svg, xs, data, kind) {
+                const tooltip = document.getElementById('velo-tooltip');
+                const crosshair = svg.querySelector('.crosshair');
+                svg.querySelectorAll('.hover-zone').forEach(zone => {
+                    const idx = parseInt(zone.getAttribute('data-idx'), 10);
+                    zone.addEventListener('mouseenter', () => {
+                        if (crosshair) { crosshair.setAttribute('x1', xs[idx]); crosshair.setAttribute('x2', xs[idx]); crosshair.setAttribute('opacity', '1'); }
+                        const d = data[idx];
+                        let html = '<b>' + d.jour + '</b> · ' + d.lieu + '<br>';
+                        if (kind === 'temp') {
+                            html += 'Prévu : ' + Math.round(d.tmin) + '–' + Math.round(d.tmax) + ' °C<br>';
+                            html += d.nTMin !== undefined ? 'Normale : ' + Math.round(d.nTMin) + '–' + Math.round(d.nTMax) + ' °C' : 'Normale : en attente';
+                        } else {
+                            html += 'Rafales prévues : ' + Math.round(d.gust) + ' km/h<br>';
+                            html += d.nGMean !== undefined ? 'Normale : ' + Math.round(d.nGMean) + ' km/h (record ' + Math.round(d.nGRecord) + ' km/h)' : 'Normale : en attente';
+                        }
+                        tooltip.innerHTML = html;
+                        tooltip.hidden = false;
+                    });
+                    zone.addEventListener('mousemove', e => {
+                        tooltip.style.left = (e.clientX + 14) + 'px';
+                        tooltip.style.top = (e.clientY + 14) + 'px';
+                    });
+                    zone.addEventListener('mouseleave', () => {
+                        tooltip.hidden = true;
+                        if (crosshair) crosshair.setAttribute('opacity', '0');
+                    });
+                });
+            }
+
+            function buildChartData(byLocation, normalsByLocation) {
+                const out = [];
+                rows.forEach(row => {
+                    const lat = row.getAttribute('data-lat');
+                    const lon = row.getAttribute('data-lon');
+                    const date = row.getAttribute('data-date');
+                    const data = byLocation[locKey(lat, lon)];
+                    if (!data || !data.daily) return;
+                    const idx = data.daily.time.indexOf(date);
+                    if (idx === -1) return;
+                    const jourEl = row.querySelector('.jr b');
+                    const entry = {
+                        jour: jourEl ? jourEl.textContent : '',
+                        lieu: row.children[1].textContent,
+                        tmin: data.daily.temperature_2m_min[idx],
+                        tmax: data.daily.temperature_2m_max[idx],
+                        gust: data.daily.wind_gusts_10m_max[idx],
+                    };
+                    const normal = normalsByLocation ? normalsByLocation[locKey(lat, lon)] : null;
+                    if (normal) {
+                        entry.nTMin = normal.tempMinMean;
+                        entry.nTMax = normal.tempMaxMean;
+                        entry.nGMean = normal.gustMean;
+                        entry.nGRecord = normal.gustRecord;
+                    }
+                    out.push(entry);
+                });
+                return out;
+            }
+
+            function renderTempChart(data) {
+                const svg = document.getElementById('velo-chart-temp');
+                const legend = document.getElementById('velo-legend-temp');
+                if (!svg || !data.length) return;
+                const xs = data.map((d, i) => xPos(i, data.length));
+                const hasNormal = data.some(d => d.nTMin !== undefined);
+                const allVals = [];
+                data.forEach(d => { allVals.push(d.tmin, d.tmax); if (d.nTMin !== undefined) allVals.push(d.nTMin, d.nTMax); });
+                const yMin = Math.min(...allVals) - 2, yMax = Math.max(...allVals) + 2;
+
+                let s = buildAxes(yMin, yMax, data.map(d => d.jour));
+                if (hasNormal) {
+                    const nMax = data.map(d => d.nTMax !== undefined ? d.nTMax : null);
+                    const nMin = data.map(d => d.nTMin !== undefined ? d.nTMin : null);
+                    s += '<path d="' + buildAreaPath(xs, nMax, nMin, yMin, yMax) + '" fill="var(--ink-soft)" fill-opacity="0.14"></path>';
+                    s += '<path d="' + buildLinePath(xs, nMax, yMin, yMax) + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"></path>';
+                    s += '<path d="' + buildLinePath(xs, nMin, yMin, yMax) + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"></path>';
+                }
+                const tMax = data.map(d => d.tmax), tMin = data.map(d => d.tmin);
+                s += '<path d="' + buildAreaPath(xs, tMax, tMin, yMin, yMax) + '" fill="var(--clay)" fill-opacity="0.16"></path>';
+                s += '<path d="' + buildLinePath(xs, tMax, yMin, yMax) + '" fill="none" stroke="var(--clay)" stroke-width="2"></path>';
+                s += '<path d="' + buildLinePath(xs, tMin, yMin, yMax) + '" fill="none" stroke="var(--clay)" stroke-width="2" stroke-opacity="0.55"></path>';
+                s += buildHoverZones(xs, data.length);
+
+                svg.innerHTML = s;
+                attachHover(svg, xs, data, 'temp');
+                legend.innerHTML = '<span><span class="sw" style="background:var(--clay);"></span>Prévision (min-max du jour)</span>' +
+                    (hasNormal ? '<span><span class="sw" style="background:var(--ink-soft);"></span>Normale locale (min-max moyen, ' + NORMAL_START_YEAR + '-' + NORMAL_END_YEAR + ')</span>'
+                        : '<span>Normale historique en cours de chargement…</span>');
+            }
+
+            function renderGustChart(data) {
+                const svg = document.getElementById('velo-chart-gust');
+                const legend = document.getElementById('velo-legend-gust');
+                if (!svg || !data.length) return;
+                const xs = data.map((d, i) => xPos(i, data.length));
+                const hasNormal = data.some(d => d.nGMean !== undefined);
+                const allVals = [0];
+                data.forEach(d => { allVals.push(d.gust); if (d.nGMean !== undefined) allVals.push(d.nGMean, d.nGRecord); });
+                const yMin = 0, yMax = Math.max(...allVals) + 5;
+
+                let s = buildAxes(yMin, yMax, data.map(d => d.jour));
+                if (hasNormal) {
+                    const mean = data.map(d => d.nGMean !== undefined ? d.nGMean : null);
+                    const record = data.map(d => d.nGRecord !== undefined ? d.nGRecord : null);
+                    s += '<path d="' + buildAreaPath(xs, record, mean, yMin, yMax) + '" fill="var(--ink-soft)" fill-opacity="0.10"></path>';
+                    s += '<path d="' + buildLinePath(xs, mean, yMin, yMax) + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"></path>';
+                    s += '<path d="' + buildLinePath(xs, record, yMin, yMax) + '" fill="none" stroke="var(--ink-soft)" stroke-width="1" stroke-opacity="0.6"></path>';
+                }
+                const gust = data.map(d => d.gust);
+                s += '<path d="' + buildLinePath(xs, gust, yMin, yMax) + '" fill="none" stroke="var(--clay)" stroke-width="2"></path>';
+                xs.forEach((x, i) => { s += '<circle cx="' + x + '" cy="' + yPos(gust[i], yMin, yMax) + '" r="4" fill="var(--clay)" stroke="var(--surface)" stroke-width="2"></circle>'; });
+                s += buildHoverZones(xs, data.length);
+
+                svg.innerHTML = s;
+                attachHover(svg, xs, data, 'gust');
+                legend.innerHTML = '<span><span class="sw" style="background:var(--clay);"></span>Rafales prévues</span>' +
+                    (hasNormal ? '<span><span class="sw" style="background:var(--ink-soft);"></span>Normale locale (moyenne à record, ' + NORMAL_START_YEAR + '-' + NORMAL_END_YEAR + ')</span>'
+                        : '<span>Normale historique en cours de chargement…</span>');
+            }
+
             function renderAll(byLocation, mb, normalsByLocation, offline, updatedAt) {
                 rows.forEach(row => renderRow(row, byLocation, mb, normalsByLocation));
+                const chartData = buildChartData(byLocation, normalsByLocation);
+                renderTempChart(chartData);
+                renderGustChart(chartData);
                 if (meta) {
                     const ts = updatedAt ? new Date(updatedAt).toLocaleString('fr-CA') : 'inconnue';
                     meta.textContent = offline
