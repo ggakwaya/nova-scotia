@@ -1,10 +1,11 @@
-const CACHE_NAME = 'nova-scotia-v9';
+const CACHE_NAME = 'nova-scotia-v10';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.png',
   './map-data.geojson',
+  './forecast-snapshot.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
 ];

@@ -1600,16 +1600,23 @@
                         : '<span>Normale historique en cours de chargement…</span>');
             }
 
-            function renderAll(byLocation, mb, normalsByLocation, offline, updatedAt) {
+            function renderAll(byLocation, mb, normalsByLocation, source, updatedAt) {
                 rows.forEach(row => renderRow(row, byLocation, mb, normalsByLocation));
                 const chartData = buildChartData(byLocation, normalsByLocation);
                 renderTempChart(chartData);
                 renderGustChart(chartData);
                 if (meta) {
                     const ts = updatedAt ? new Date(updatedAt).toLocaleString('fr-CA') : 'inconnue';
-                    meta.textContent = offline
-                        ? 'Hors-ligne -- dernière donnée connue du ' + ts + '.'
-                        : 'Données ECMWF mises à jour le ' + ts + (mb ? ' · consensus Meteoblue inclus' : '') + '.';
+                    const mbNote = mb ? ' · consensus Meteoblue inclus' : '';
+                    if (source === 'live') {
+                        meta.textContent = 'Données ECMWF en direct, mises à jour le ' + ts + mbNote + '.';
+                    } else if (source === 'snapshot') {
+                        meta.textContent = 'Hors-ligne -- instantané du ' + ts + ' (régénéré 2x/jour, 3 h et 15 h heure de l\'Atlantique)' + mbNote + '.';
+                    } else if (source === 'cache') {
+                        meta.textContent = 'Hors-ligne -- dernière visite en ligne du ' + ts + mbNote + '.';
+                    } else {
+                        meta.textContent = 'Données météo indisponibles (aucun réseau et aucun instantané en cache).';
+                    }
                 }
             }
 
@@ -1634,59 +1641,99 @@
                 }
             }
 
+            // Instantané régénéré 2x/jour par GitHub Actions et précaché par le
+            // service worker : c'est lui qui rend la section lisible sans réseau,
+            // et il fournit les normales sans les appels ERA5 lents côté client.
+            async function fetchSnapshot() {
+                try {
+                    const res = await fetch('./forecast-snapshot.json');
+                    if (!res.ok) return null;
+                    return await res.json();
+                } catch (e) {
+                    return null;
+                }
+            }
+
             (async function init() {
                 const uniqueLocs = Array.from(new Set(rows.map(r => locKey(r.getAttribute('data-lat'), r.getAttribute('data-lon')))));
                 let byLocation = {};
-                let offline = false;
-                let updatedAt = Date.now();
+                let normalsByLocation = {};
+                let updatedAt = null;
+                let source = null;
+                let mb = null;
+
+                // 1. Instantané local d'abord : précaché, donc immédiat et disponible
+                //    sans réseau. Il porte aussi les normales, ce qui évite au
+                //    navigateur les appels ERA5 lents qui se font rate-limiter.
+                const snap = await fetchSnapshot();
+                if (snap && snap.byLocation) {
+                    byLocation = snap.byLocation;
+                    normalsByLocation = snap.normals || {};
+                    updatedAt = snap.updatedAt;
+                    source = 'snapshot';
+                    renderAll(byLocation, mb, normalsByLocation, source, updatedAt);
+                }
+
+                // 2. Puis le direct, qui est plus frais que l'instantané dès qu'on a
+                //    du réseau. On n'écrase qu'en cas de succès complet.
                 try {
                     const results = await Promise.all(uniqueLocs.map(async key => {
                         const [lat, lon] = key.split(',');
                         return [key, await fetchLocation(lat, lon)];
                     }));
-                    results.forEach(([key, val]) => { byLocation[key] = val; });
+                    const live = {};
+                    results.forEach(([key, val]) => { live[key] = val; });
+                    byLocation = live;
+                    updatedAt = Date.now();
+                    source = 'live';
                     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, byLocation }));
                 } catch (e) {
-                    offline = true;
-                    const cached = localStorage.getItem(CACHE_KEY);
-                    if (cached) {
-                        const parsed = JSON.parse(cached);
-                        byLocation = parsed.byLocation;
-                        updatedAt = parsed.updatedAt;
+                    // Pas de réseau : l'instantané fait le travail. S'il manque aussi,
+                    // on retombe sur la dernière visite en ligne.
+                    if (!source) {
+                        const cached = localStorage.getItem(CACHE_KEY);
+                        if (cached) {
+                            const parsed = JSON.parse(cached);
+                            byLocation = parsed.byLocation;
+                            updatedAt = parsed.updatedAt;
+                            source = 'cache';
+                        }
                     }
                 }
-                let mb = await fetchMeteoblue();
+
+                mb = await fetchMeteoblue();
                 if (mb) {
                     localStorage.setItem(MB_CACHE_KEY, JSON.stringify(mb));
-                } else if (offline) {
+                } else if (source !== 'live') {
                     const cachedMb = localStorage.getItem(MB_CACHE_KEY);
                     if (cachedMb) mb = JSON.parse(cachedMb);
                 }
 
-                // Normales : coûteuses (années de données), mises en cache indéfiniment --
-                // le climat d'un secteur ne change pas d'une session à l'autre.
-                let normalsByLocation = {};
-                const cachedNormals = localStorage.getItem(NORMAL_CACHE_KEY);
-                if (cachedNormals) {
-                    normalsByLocation = JSON.parse(cachedNormals);
-                } else {
-                    for (const key of uniqueLocs) {
-                        const [lat, lon] = key.split(',');
-                        const datesForLoc = rows
-                            .filter(r => locKey(r.getAttribute('data-lat'), r.getAttribute('data-lon')) === key)
-                            .map(r => r.getAttribute('data-date'));
-                        const allowedKeys = new Set();
-                        datesForLoc.forEach(d => dayWindowKeys(d, NORMAL_WINDOW_DAYS).forEach(k => allowedKeys.add(k)));
-                        normalsByLocation[key] = await fetchNormalSafe(lat, lon, allowedKeys);
-                        renderAll(byLocation, mb, normalsByLocation, offline, updatedAt);
-                        await sleep(500);
-                    }
-                    if (Object.values(normalsByLocation).some(v => v)) {
-                        localStorage.setItem(NORMAL_CACHE_KEY, JSON.stringify(normalsByLocation));
+                // 3. Normales : fournies par l'instantané dans le cas normal. Le calcul
+                //    côté client ne sert plus que si l'instantané est absent.
+                if (!Object.values(normalsByLocation).some(v => v)) {
+                    const cachedNormals = localStorage.getItem(NORMAL_CACHE_KEY);
+                    if (cachedNormals) {
+                        normalsByLocation = JSON.parse(cachedNormals);
+                    } else {
+                        for (const key of uniqueLocs) {
+                            const [lat, lon] = key.split(',');
+                            const datesForLoc = rows
+                                .filter(r => locKey(r.getAttribute('data-lat'), r.getAttribute('data-lon')) === key)
+                                .map(r => r.getAttribute('data-date'));
+                            const allowedKeys = new Set();
+                            datesForLoc.forEach(d => dayWindowKeys(d, NORMAL_WINDOW_DAYS).forEach(k => allowedKeys.add(k)));
+                            normalsByLocation[key] = await fetchNormalSafe(lat, lon, allowedKeys);
+                            renderAll(byLocation, mb, normalsByLocation, source, updatedAt);
+                            await sleep(500);
+                        }
+                        if (Object.values(normalsByLocation).some(v => v)) {
+                            localStorage.setItem(NORMAL_CACHE_KEY, JSON.stringify(normalsByLocation));
+                        }
                     }
                 }
 
-                renderAll(byLocation, mb, normalsByLocation, offline, updatedAt);
+                renderAll(byLocation, mb, normalsByLocation, source, updatedAt);
             })();
         })();
     </script>
