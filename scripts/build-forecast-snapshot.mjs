@@ -149,11 +149,19 @@ async function fetchMeteoblueDays(rows) {
   const days = {};
   for (const key of locKeys) {
     const [lat, lon] = key.split(',');
+    // windspeed=kmh est indispensable : Meteoblue renvoie des m/s par défaut, ce
+    // qui afficherait un « vent 4 km/h » à côté du « 16 km/h » d'ECMWF sans que
+    // rien ne signale l'erreur. On demande l'unité à l'API plutôt que de
+    // convertir soi-même, puis on vérifie ce qu'elle a réellement renvoyé.
     const url =
       `https://my.meteoblue.com/packages/basic-day?apikey=${apiKey}` +
-      `&lat=${lat}&lon=${lon}&format=json`;
+      `&lat=${lat}&lon=${lon}&format=json&windspeed=kmh&temperature=C`;
     // Le label ne contient pas l'URL : une erreur ne doit pas divulguer la clé.
     const json = await fetchJson(url, `Meteoblue ${key}`);
+    const windUnit = json.units?.windspeed;
+    if (windUnit && !/kmh|km\/h/i.test(windUnit)) {
+      throw new Error(`Meteoblue ${key} : vent renvoyé en "${windUnit}" et non en km/h`);
+    }
     const d = json.data_day;
     if (!d?.time) {
       throw new Error(
