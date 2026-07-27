@@ -216,10 +216,13 @@
         table.cal .none { font-style: italic; opacity: .8; }
         table.cal tr.coda td { background: var(--surface-2); }
         table.cal tr.coda .jr b { color: var(--slate); }
-        .velo-badge.ok { color: var(--slate); font-weight: 600; }
-        .velo-badge.warn { color: var(--amber); font-weight: 600; }
-        .velo-badge.bad { color: var(--clay); font-weight: 600; }
-        .velo-badge.pending { color: var(--ink-soft); font-style: italic; }
+        .velo-summary { color: var(--ink); }
+        .velo-summary.pending { color: var(--ink-soft); font-style: italic; }
+        .velo-hourly { margin-top: 8px; }
+        .velo-hourly summary { cursor: pointer; font-size: 12px; color: var(--clay-deep); font-weight: 600; }
+        table.velo-hourly-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+        table.velo-hourly-table th { text-align: left; padding: 4px 8px; color: var(--amber); font-weight: 600; font-family: 'Spline Sans Mono', monospace; font-size: 10px; text-transform: uppercase; }
+        table.velo-hourly-table td { padding: 4px 8px; border-top: 1px solid var(--line-soft); color: var(--ink-soft); white-space: nowrap; }
 
         /* ---- CARD GRIDS ---- */
         .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -895,29 +898,29 @@
         <div class="wrap">
             <div class="sh">
                 <div class="num">11</div>
-                <h2>Vélo -- prévisions</h2>
-                <div class="note">ECMWF (Open-Meteo) · 24-48h à l'avance</div>
+                <h2>Vélo -- données météo brutes</h2>
+                <div class="note">ECMWF (Open-Meteo) · aucune interprétation, juste les chiffres</div>
             </div>
-            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Conditions cyclables estimées pour chaque jour du séjour, à partir du modèle ECMWF. Alerte si vent ≥ 30 km/h, pluie ≥ 40% de proba (ou ≥ 1 mm), ou température &lt; 5 °C / &gt; 32 °C. Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
+            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Toutes les données viennent telles quelles du modèle ECMWF, sans jugement de notre part sur ce qui fait une bonne journée de vélo -- c'est à toi de trancher. Chaque jour affiche le résumé quotidien ; clique « Détail horaire » pour voir heure par heure (6 h-21 h) température, pluie, vent et rafales. Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
             <div class="calwrap">
                 <table class="cal" id="velo-table">
                     <thead>
-                        <tr><th>Jour</th><th>Lieu</th><th>Prévision</th><th>Vélo</th></tr>
+                        <tr><th>Jour</th><th>Lieu</th><th>Prévision</th></tr>
                     </thead>
                     <tbody>
-                        <tr data-date="2026-07-27" data-lat="46.0878" data-lon="-64.7782"><td class="jr"><b>J1</b><span>Lun 27 juil</span></td><td data-l="Lieu">Moncton</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-07-28" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J2</b><span>Mar 28 juil</span></td><td data-l="Lieu">Mira River</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-07-29" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J3</b><span>Mer 29 juil</span></td><td data-l="Lieu">Mira River (Louisbourg)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-07-30" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J4</b><span>Jeu 30 juil</span></td><td data-l="Lieu">Broad Cove</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-07-31" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J5</b><span>Ven 31 juil</span></td><td data-l="Lieu">Broad Cove (Meat Cove)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-01" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J6</b><span>Sam 1 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-02" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J7</b><span>Dim 2 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-03" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J8</b><span>Lun 3 août</span></td><td data-l="Lieu">Kentville</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-04" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J9</b><span>Mar 4 août</span></td><td data-l="Lieu">Kentville (Halifax)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-05" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J10</b><span>Mer 5 août</span></td><td data-l="Lieu">Kentville (Lunenburg)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-06" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J11</b><span>Jeu 6 août</span></td><td data-l="Lieu">Kentville (Clam Harbour)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-07" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J12</b><span>Ven 7 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
-                        <tr data-date="2026-08-08" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J13</b><span>Sam 8 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-07-27" data-lat="46.0878" data-lon="-64.7782"><td class="jr"><b>J1</b><span>Lun 27 juil</span></td><td data-l="Lieu">Moncton</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-07-28" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J2</b><span>Mar 28 juil</span></td><td data-l="Lieu">Mira River</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-07-29" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J3</b><span>Mer 29 juil</span></td><td data-l="Lieu">Mira River (Louisbourg)</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-07-30" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J4</b><span>Jeu 30 juil</span></td><td data-l="Lieu">Broad Cove</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-07-31" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J5</b><span>Ven 31 juil</span></td><td data-l="Lieu">Broad Cove (Meat Cove)</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-01" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J6</b><span>Sam 1 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-02" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J7</b><span>Dim 2 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-03" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J8</b><span>Lun 3 août</span></td><td data-l="Lieu">Kentville</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-04" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J9</b><span>Mar 4 août</span></td><td data-l="Lieu">Kentville (Halifax)</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-05" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J10</b><span>Mer 5 août</span></td><td data-l="Lieu">Kentville (Lunenburg)</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-06" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J11</b><span>Jeu 6 août</span></td><td data-l="Lieu">Kentville (Clam Harbour)</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-07" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J12</b><span>Ven 7 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
+                        <tr data-date="2026-08-08" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J13</b><span>Sam 8 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">en attente…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1191,7 +1194,9 @@
         })();
     </script>
 
-    <!-- VÉLO -- PRÉVISIONS ECMWF (+ CONSENSUS METEOBLUE OPTIONNEL) -->
+    <!-- VÉLO : DONNÉES BRUTES ECMWF (+ CONSENSUS METEOBLUE OPTIONNEL) -->
+    <!-- Pas de verdict "favorable/déconseillé" ici : on affiche les chiffres du modèle
+         (quotidien + détail horaire) et la décision reste à la personne qui lit. -->
     <script>
         (function() {
             const table = document.getElementById('velo-table');
@@ -1200,20 +1205,51 @@
             const rows = Array.from(table.querySelectorAll('tbody tr[data-lat]'));
             const CACHE_KEY = 'nova-scotia-velo-ecmwf';
             const MB_CACHE_KEY = 'nova-scotia-velo-meteoblue';
+            const DAY_START_HOUR = 6;
+            const DAY_END_HOUR = 21;
+
+            const WMO_FR = {
+                0: 'Ciel dégagé', 1: 'Généralement dégagé', 2: 'Partiellement nuageux', 3: 'Couvert',
+                45: 'Brouillard', 48: 'Brouillard givrant',
+                51: 'Bruine légère', 53: 'Bruine modérée', 55: 'Bruine dense',
+                56: 'Bruine verglaçante légère', 57: 'Bruine verglaçante dense',
+                61: 'Pluie légère', 63: 'Pluie modérée', 65: 'Pluie forte',
+                66: 'Pluie verglaçante légère', 67: 'Pluie verglaçante forte',
+                71: 'Neige légère', 73: 'Neige modérée', 75: 'Neige forte', 77: 'Grains de neige',
+                80: 'Averses légères', 81: 'Averses modérées', 82: 'Averses violentes',
+                85: 'Averses de neige légères', 86: 'Averses de neige fortes',
+                95: 'Orage', 96: 'Orage avec grêle légère', 99: 'Orage avec grêle forte',
+            };
+            const condLabel = code => WMO_FR[code] || ('code ' + code);
 
             const locKey = (lat, lon) => lat + ',' + lon;
 
-            function bikeBadge(tmax, tmin, precipSum, precipProb, windMax) {
-                if ([tmax, tmin, precipSum, precipProb, windMax].some(v => v === null || v === undefined || Number.isNaN(v))) {
-                    return { icon: '--', label: 'n/a', cls: 'pending' };
-                }
-                const warnings = [];
-                if (windMax >= 30) warnings.push('vent');
-                if (precipProb >= 40 || precipSum >= 1) warnings.push('pluie');
-                if (tmin < 5 || tmax > 32) warnings.push('temp');
-                if (warnings.length === 0) return { icon: '✅', label: 'Favorable', cls: 'ok' };
-                if (warnings.length === 1) return { icon: '⚠️', label: 'À surveiller (' + warnings[0] + ')', cls: 'warn' };
-                return { icon: '❌', label: 'Déconseillé (' + warnings.join(', ') + ')', cls: 'bad' };
+            function hourlyTableHtml(hourly, date) {
+                if (!hourly || !hourly.time) return '';
+                const idxs = hourly.time
+                    .map((t, i) => ({ t, i }))
+                    .filter(({ t }) => t.startsWith(date))
+                    .filter(({ t }) => {
+                        const h = parseInt(t.slice(11, 13), 10);
+                        return h >= DAY_START_HOUR && h <= DAY_END_HOUR;
+                    });
+                if (!idxs.length) return '';
+                const rows = idxs.map(({ i, t }) => {
+                    const heure = t.slice(11, 16);
+                    const temp = hourly.temperature_2m[i];
+                    const precipProb = hourly.precipitation_probability[i];
+                    const precip = hourly.precipitation[i];
+                    const wind = hourly.wind_speed_10m[i];
+                    const gust = hourly.wind_gusts_10m[i];
+                    const code = hourly.weather_code[i];
+                    return '<tr><td>' + heure + '</td><td>' + Math.round(temp) + ' °C</td><td>' +
+                        precip.toFixed(1) + ' mm (' + Math.round(precipProb) + '%)</td><td>' +
+                        Math.round(wind) + ' km/h</td><td>' + Math.round(gust) + ' km/h</td><td>' +
+                        condLabel(code) + '</td></tr>';
+                }).join('');
+                return '<details class="velo-hourly"><summary>Détail horaire (' + DAY_START_HOUR + ' h-' + DAY_END_HOUR + ' h)</summary>' +
+                    '<table class="velo-hourly-table"><thead><tr><th>Heure</th><th>Temp.</th><th>Pluie</th><th>Vent</th><th>Rafales</th><th>Condition</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></details>';
             }
 
             function renderRow(row, byLocation, mb) {
@@ -1222,35 +1258,43 @@
                 const date = row.getAttribute('data-date');
                 const data = byLocation[locKey(lat, lon)];
                 const forecastCell = row.querySelector('.velo-forecast');
-                const badgeCell = row.querySelector('.velo-badge');
-                if (!data || !data.time) {
+                if (!data || !data.daily || !data.daily.time) {
                     forecastCell.textContent = 'indisponible';
-                    badgeCell.textContent = 'n/a';
-                    badgeCell.className = 'velo-badge pending';
+                    forecastCell.className = 'velo-forecast pending';
                     return;
                 }
-                const idx = data.time.indexOf(date);
+                const idx = data.daily.time.indexOf(date);
                 if (idx === -1) {
-                    forecastCell.textContent = 'hors fenêtre de prévision';
-                    badgeCell.textContent = '--';
-                    badgeCell.className = 'velo-badge pending';
+                    forecastCell.textContent = 'hors fenêtre de prévision (16 jours max)';
+                    forecastCell.className = 'velo-forecast pending';
                     return;
                 }
-                const tmax = data.temperature_2m_max[idx];
-                const tmin = data.temperature_2m_min[idx];
-                const precipSum = data.precipitation_sum[idx];
-                const precipProb = data.precipitation_probability_max[idx];
-                const windMax = data.wind_speed_10m_max[idx];
-                forecastCell.textContent = Math.round(tmin) + '–' + Math.round(tmax) + ' °C · vent ' + Math.round(windMax) + ' km/h · pluie ' + Math.round(precipProb) + '%';
-                const badge = bikeBadge(tmax, tmin, precipSum, precipProb, windMax);
-                let text = badge.icon + ' ' + badge.label;
+                const d = data.daily;
+                const tmax = d.temperature_2m_max[idx];
+                const tmin = d.temperature_2m_min[idx];
+                const precipSum = d.precipitation_sum[idx];
+                const precipProb = d.precipitation_probability_max[idx];
+                const windMax = d.wind_speed_10m_max[idx];
+                const windGust = d.wind_gusts_10m_max[idx];
+                const code = d.weather_code[idx];
+
+                let html = '<div class="velo-summary">' +
+                    Math.round(tmin) + '–' + Math.round(tmax) + ' °C · vent ' + Math.round(windMax) +
+                    ' km/h (rafales ' + Math.round(windGust) + ') · pluie ' + precipSum.toFixed(1) +
+                    ' mm (' + Math.round(precipProb) + '% de proba) · ' + condLabel(code) +
+                    ' <span style="color:var(--ink-soft);">-- ECMWF/IFS</span></div>';
+
                 if (mb && mb.days && mb.days[date]) {
-                    const d = mb.days[date];
-                    const mbBadge = bikeBadge(d.temp_max, d.temp_min, d.precip_mm, d.precip_prob, d.wind_max);
-                    text += ' · MB ' + mbBadge.icon;
+                    const m = mb.days[date];
+                    html += '<div class="velo-summary" style="margin-top:4px;">' +
+                        Math.round(m.temp_min) + '–' + Math.round(m.temp_max) + ' °C · vent ' + Math.round(m.wind_max) +
+                        ' km/h · pluie ' + Number(m.precip_mm).toFixed(1) + ' mm (' + Math.round(m.precip_prob) +
+                        '% de proba) <span style="color:var(--ink-soft);">-- Meteoblue (mLM)</span></div>';
                 }
-                badgeCell.textContent = text;
-                badgeCell.className = 'velo-badge ' + badge.cls;
+
+                html += hourlyTableHtml(data.hourly, date);
+                forecastCell.innerHTML = html;
+                forecastCell.className = 'velo-forecast';
             }
 
             function renderAll(byLocation, mb, offline, updatedAt) {
@@ -1258,19 +1302,20 @@
                 if (meta) {
                     const ts = updatedAt ? new Date(updatedAt).toLocaleString('fr-CA') : 'inconnue';
                     meta.textContent = offline
-                        ? 'Hors-ligne -- dernière prévision connue du ' + ts + '.'
-                        : 'Prévisions ECMWF mises à jour le ' + ts + (mb ? ' · consensus Meteoblue inclus' : '') + '.';
+                        ? 'Hors-ligne -- dernière donnée connue du ' + ts + '.'
+                        : 'Données ECMWF mises à jour le ' + ts + (mb ? ' · consensus Meteoblue inclus' : '') + '.';
                 }
             }
 
             async function fetchLocation(lat, lon) {
                 const url = 'https://api.open-meteo.com/v1/ecmwf?latitude=' + lat + '&longitude=' + lon +
-                    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max' +
+                    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,weather_code' +
+                    '&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code' +
                     '&timezone=auto&forecast_days=16';
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('ECMWF fetch failed: ' + res.status);
                 const json = await res.json();
-                return json.daily;
+                return { daily: json.daily, hourly: json.hourly };
             }
 
             async function fetchMeteoblue() {
@@ -1293,7 +1338,7 @@
                         const [lat, lon] = key.split(',');
                         return [key, await fetchLocation(lat, lon)];
                     }));
-                    results.forEach(([key, daily]) => { byLocation[key] = daily; });
+                    results.forEach(([key, val]) => { byLocation[key] = val; });
                     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, byLocation }));
                 } catch (e) {
                     offline = true;
