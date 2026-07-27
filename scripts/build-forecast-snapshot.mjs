@@ -135,6 +135,60 @@ async function fetchNormal(lat, lon, allowedKeys) {
   return computeNormal(json.daily, allowedKeys);
 }
 
+// -- Meteoblue (modèle mLM) : deuxième avis, optionnel --
+// La clé ne transite que par l'env (secret Actions ou .env local). Elle ne doit
+// jamais finir dans le dépôt : GitHub Pages sert ce repo publiquement. Seules
+// les valeurs météo sont écrites dans l'instantané, jamais la clé ni l'URL.
+async function fetchMeteoblueDays(rows) {
+  const apiKey = process.env.METEOBLUE_API_KEY;
+  if (!apiKey) {
+    console.log('METEOBLUE_API_KEY absente -- consensus Meteoblue ignoré (optionnel)');
+    return null;
+  }
+  const locKeys = [...new Set(rows.map((r) => `${r.lat},${r.lon}`))];
+  const days = {};
+  for (const key of locKeys) {
+    const [lat, lon] = key.split(',');
+    const url =
+      `https://my.meteoblue.com/packages/basic-day?apikey=${apiKey}` +
+      `&lat=${lat}&lon=${lon}&format=json`;
+    // Le label ne contient pas l'URL : une erreur ne doit pas divulguer la clé.
+    const json = await fetchJson(url, `Meteoblue ${key}`);
+    const d = json.data_day;
+    if (!d?.time) {
+      throw new Error(
+        `Meteoblue ${key} : pas de data_day. Clés reçues : ${Object.keys(json).join(', ')}`
+      );
+    }
+    // Noms de champs d'après la doc du package basic-day. S'ils diffèrent, on
+    // échoue en listant ce qui a réellement été reçu plutôt que d'écrire des
+    // valeurs vides silencieusement.
+    const need = ['temperature_max', 'temperature_min', 'precipitation', 'windspeed_max'];
+    const absent = need.filter((f) => !d[f]);
+    if (absent.length) {
+      throw new Error(
+        `Meteoblue ${key} : champs manquants ${absent.join(', ')}. Champs data_day reçus : ${Object.keys(d).join(', ')}`
+      );
+    }
+    rows
+      .filter((r) => `${r.lat},${r.lon}` === key)
+      .forEach((r) => {
+        const i = d.time.indexOf(r.date);
+        if (i === -1) return; // hors de la fenêtre de prévision Meteoblue
+        days[r.date] = {
+          temp_max: d.temperature_max[i],
+          temp_min: d.temperature_min[i],
+          wind_max: d.windspeed_max[i],
+          precip_mm: d.precipitation[i],
+          precip_prob: d.precipitation_probability ? d.precipitation_probability[i] : null,
+        };
+      });
+    console.log(`  meteoblue ok  ${key}`);
+    await sleep(1200);
+  }
+  return Object.keys(days).length ? { days } : null;
+}
+
 async function main() {
   const rows = readTripRows();
   const tripDates = new Set(rows.map((r) => r.date));
@@ -165,11 +219,20 @@ async function main() {
   const missing = locKeys.filter((k) => !byLocation[k]?.daily || !normals[k]);
   if (missing.length) throw new Error(`Données manquantes pour : ${missing.join(', ')}`);
 
+  // Optionnel : n'échoue pas le build si Meteoblue tombe, le reste vaut d'être publié.
+  let meteoblue = null;
+  try {
+    meteoblue = await fetchMeteoblueDays(rows);
+  } catch (err) {
+    console.error(`avertissement Meteoblue : ${err.message}`);
+  }
+
   const snapshot = {
     updatedAt: new Date().toISOString(),
     source: { forecast: 'ECMWF/IFS via open-meteo.com', normals: `ERA5 ${NORMAL_START_YEAR}-${NORMAL_END_YEAR} via archive-api.open-meteo.com` },
     byLocation,
     normals,
+    meteoblue,
   };
   const out = join(ROOT, 'forecast-snapshot.json');
   writeFileSync(out, `${JSON.stringify(snapshot, null, 1)}\n`);

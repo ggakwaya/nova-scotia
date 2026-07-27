@@ -26,6 +26,10 @@ jobs:
           node-version: '24'
 
       - name: Générer l'instantané
+        # Secret optionnel : sans lui le script saute simplement le volet
+        # Meteoblue. La clé reste dans l'env, jamais dans le fichier produit.
+        env:
+          METEOBLUE_API_KEY: ${{ secrets.METEOBLUE_API_KEY }}
         run: node scripts/build-forecast-snapshot.mjs
 
       - name: Commiter si les données ont changé

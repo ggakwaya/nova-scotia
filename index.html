@@ -1631,16 +1631,6 @@
                 return { daily: json.daily, hourly: json.hourly };
             }
 
-            async function fetchMeteoblue() {
-                try {
-                    const res = await fetch('./bike-forecast.json', { cache: 'no-store' });
-                    if (!res.ok) return null;
-                    return await res.json();
-                } catch (e) {
-                    return null;
-                }
-            }
-
             // Instantané régénéré 2x/jour par GitHub Actions et précaché par le
             // service worker : c'est lui qui rend la section lisible sans réseau,
             // et il fournit les normales sans les appels ERA5 lents côté client.
@@ -1669,6 +1659,9 @@
                 if (snap && snap.byLocation) {
                     byLocation = snap.byLocation;
                     normalsByLocation = snap.normals || {};
+                    // Meteoblue voyage dans l'instantané : la clé qui sert à
+                    // l'obtenir reste côté build, jamais dans cette page publique.
+                    mb = snap.meteoblue || null;
                     updatedAt = snap.updatedAt;
                     source = 'snapshot';
                     renderAll(byLocation, mb, normalsByLocation, source, updatedAt);
@@ -1701,10 +1694,11 @@
                     }
                 }
 
-                mb = await fetchMeteoblue();
+                // Meteoblue vient de l'instantané (voir plus haut) ; on en garde une
+                // copie pour le cas où un build échouerait à le récupérer.
                 if (mb) {
                     localStorage.setItem(MB_CACHE_KEY, JSON.stringify(mb));
-                } else if (source !== 'live') {
+                } else {
                     const cachedMb = localStorage.getItem(MB_CACHE_KEY);
                     if (cachedMb) mb = JSON.parse(cachedMb);
                 }

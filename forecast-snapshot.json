@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-27T10:57:53.122Z",
+ "updatedAt": "2026-07-27T11:04:20.999Z",
  "source": {
   "forecast": "ECMWF/IFS via open-meteo.com",
   "normals": "ERA5 2016-2025 via archive-api.open-meteo.com"
@@ -9667,5 +9667,6 @@
    "precipMean": 3.9512499999999995,
    "rainyPct": 36
   }
- }
+ },
+ "meteoblue": null
 }
