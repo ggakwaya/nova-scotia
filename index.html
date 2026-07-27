@@ -218,6 +218,7 @@
         table.cal tr.coda .jr b { color: var(--slate); }
         .velo-summary { color: var(--ink); }
         .velo-summary.pending { color: var(--ink-soft); font-style: italic; }
+        .velo-normal { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
         .velo-hourly { margin-top: 8px; }
         .velo-hourly summary { cursor: pointer; font-size: 12px; color: var(--clay-deep); font-weight: 600; }
         table.velo-hourly-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
@@ -901,7 +902,7 @@
                 <h2>Vélo -- données météo brutes</h2>
                 <div class="note">ECMWF (Open-Meteo) · aucune interprétation, juste les chiffres</div>
             </div>
-            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Toutes les données viennent telles quelles du modèle ECMWF, sans jugement de notre part sur ce qui fait une bonne journée de vélo -- c'est à toi de trancher. Chaque jour affiche le résumé quotidien ; clique « Détail horaire » pour voir heure par heure (6 h-21 h) température, pluie, vent et rafales. Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
+            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Toutes les données viennent telles quelles du modèle ECMWF, sans jugement de notre part sur ce qui fait une bonne journée de vélo -- c'est à toi de trancher. Chaque jour affiche le résumé quotidien, une comparaison à la normale saisonnière locale (2016-2025, ± 3 jours, données historiques ERA5) puisqu'un secteur côtier a ses propres repères de « normal », et un détail horaire dépliable (6 h-21 h). Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
             <div class="calwrap">
                 <table class="cal" id="velo-table">
                     <thead>
@@ -1224,6 +1225,74 @@
 
             const locKey = (lat, lon) => lat + ',' + lon;
 
+            // -- NORMALES SAISONNIÈRES (ERA5, archive-api.open-meteo.com) --
+            // Comparaison "est-ce normal pour ce secteur côtier ?", pas un jugement -- juste
+            // la moyenne/l'étendue historique des mêmes dates (± 3 jours) sur 10 ans.
+            const NORMAL_CACHE_KEY = 'nova-scotia-velo-normales';
+            const NORMAL_START_YEAR = 2016;
+            const NORMAL_END_YEAR = 2025;
+            const NORMAL_WINDOW_DAYS = 3;
+
+            function dayWindowKeys(dateStr, pad) {
+                const keys = new Set();
+                const base = new Date(dateStr + 'T00:00:00Z');
+                for (let o = -pad; o <= pad; o++) {
+                    const d = new Date(base);
+                    d.setUTCDate(d.getUTCDate() + o);
+                    keys.add(String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'));
+                }
+                return keys;
+            }
+
+            function computeNormal(daily, allowedKeys) {
+                const tmax = [], tmin = [], wind = [], gust = [], precip = [];
+                for (let i = 0; i < daily.time.length; i++) {
+                    const monthDay = daily.time[i].slice(5, 10);
+                    if (!allowedKeys.has(monthDay)) continue;
+                    const a = daily.temperature_2m_max[i], b = daily.temperature_2m_min[i],
+                        c = daily.wind_speed_10m_max[i], d = daily.wind_gusts_10m_max[i], e = daily.precipitation_sum[i];
+                    if (a === null || b === null || c === null || d === null || e === null) continue;
+                    tmax.push(a); tmin.push(b); wind.push(c); gust.push(d); precip.push(e);
+                }
+                if (!tmax.length) return null;
+                const mean = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+                const rainyDays = precip.filter(v => v >= 1).length;
+                return {
+                    n: tmax.length,
+                    tempMaxMean: mean(tmax), tempMaxMin: Math.min(...tmax), tempMaxMax: Math.max(...tmax),
+                    tempMinMean: mean(tmin), tempMinMin: Math.min(...tmin), tempMinMax: Math.max(...tmin),
+                    windMean: mean(wind), gustMean: mean(gust), gustRecord: Math.max(...gust),
+                    precipMean: mean(precip), rainyPct: Math.round((rainyDays / precip.length) * 100),
+                };
+            }
+
+            async function fetchNormal(lat, lon, allowedKeys) {
+                const url = 'https://archive-api.open-meteo.com/v1/archive?latitude=' + lat + '&longitude=' + lon +
+                    '&start_date=' + NORMAL_START_YEAR + '-01-01&end_date=' + NORMAL_END_YEAR + '-12-31' +
+                    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max' +
+                    '&timezone=auto';
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Archive fetch failed: ' + res.status);
+                const json = await res.json();
+                return computeNormal(json.daily, allowedKeys);
+            }
+
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+            // L'API archive gratuite limite les requêtes en rafale (429 si trop en parallèle) --
+            // un lieu qui échoue ne doit pas faire perdre les normales des autres.
+            async function fetchNormalSafe(lat, lon, allowedKeys) {
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        return await fetchNormal(lat, lon, allowedKeys);
+                    } catch (e) {
+                        if (attempt === 2) return null;
+                        await sleep(1500 * (attempt + 1));
+                    }
+                }
+                return null;
+            }
+
             function hourlyTableHtml(hourly, date) {
                 if (!hourly || !hourly.time) return '';
                 const idxs = hourly.time
@@ -1252,7 +1321,7 @@
                     '<tbody>' + rows + '</tbody></table></details>';
             }
 
-            function renderRow(row, byLocation, mb) {
+            function renderRow(row, byLocation, mb, normalsByLocation) {
                 const lat = row.getAttribute('data-lat');
                 const lon = row.getAttribute('data-lon');
                 const date = row.getAttribute('data-date');
@@ -1292,13 +1361,24 @@
                         '% de proba) <span style="color:var(--ink-soft);">-- Meteoblue (mLM)</span></div>';
                 }
 
+                const normal = normalsByLocation ? normalsByLocation[locKey(lat, lon)] : null;
+                if (normal) {
+                    html += '<div class="velo-normal">Normale ' + NORMAL_START_YEAR + '-' + NORMAL_END_YEAR + ' (± ' + NORMAL_WINDOW_DAYS + ' j, n=' + normal.n + ') : ' +
+                        Math.round(normal.tempMinMean) + '–' + Math.round(normal.tempMaxMean) + ' °C (déjà vu : ' +
+                        Math.round(normal.tempMinMin) + ' à ' + Math.round(normal.tempMaxMax) + ' °C) · vent moy ' +
+                        Math.round(normal.windMean) + ' km/h, rafales moy ' + Math.round(normal.gustMean) +
+                        ' km/h (record du secteur : ' + Math.round(normal.gustRecord) + ' km/h) · pluie moy ' +
+                        normal.precipMean.toFixed(1) + ' mm/j, ' + normal.rainyPct + '% des jours avec ≥ 1 mm ' +
+                        '<span style="color:var(--ink-soft);">-- ERA5, archive-api.open-meteo.com</span></div>';
+                }
+
                 html += hourlyTableHtml(data.hourly, date);
                 forecastCell.innerHTML = html;
                 forecastCell.className = 'velo-forecast';
             }
 
-            function renderAll(byLocation, mb, offline, updatedAt) {
-                rows.forEach(row => renderRow(row, byLocation, mb));
+            function renderAll(byLocation, mb, normalsByLocation, offline, updatedAt) {
+                rows.forEach(row => renderRow(row, byLocation, mb, normalsByLocation));
                 if (meta) {
                     const ts = updatedAt ? new Date(updatedAt).toLocaleString('fr-CA') : 'inconnue';
                     meta.textContent = offline
@@ -1356,7 +1436,31 @@
                     const cachedMb = localStorage.getItem(MB_CACHE_KEY);
                     if (cachedMb) mb = JSON.parse(cachedMb);
                 }
-                renderAll(byLocation, mb, offline, updatedAt);
+
+                // Normales : coûteuses (années de données), mises en cache indéfiniment --
+                // le climat d'un secteur ne change pas d'une session à l'autre.
+                let normalsByLocation = {};
+                const cachedNormals = localStorage.getItem(NORMAL_CACHE_KEY);
+                if (cachedNormals) {
+                    normalsByLocation = JSON.parse(cachedNormals);
+                } else {
+                    for (const key of uniqueLocs) {
+                        const [lat, lon] = key.split(',');
+                        const datesForLoc = rows
+                            .filter(r => locKey(r.getAttribute('data-lat'), r.getAttribute('data-lon')) === key)
+                            .map(r => r.getAttribute('data-date'));
+                        const allowedKeys = new Set();
+                        datesForLoc.forEach(d => dayWindowKeys(d, NORMAL_WINDOW_DAYS).forEach(k => allowedKeys.add(k)));
+                        normalsByLocation[key] = await fetchNormalSafe(lat, lon, allowedKeys);
+                        renderAll(byLocation, mb, normalsByLocation, offline, updatedAt);
+                        await sleep(500);
+                    }
+                    if (Object.values(normalsByLocation).some(v => v)) {
+                        localStorage.setItem(NORMAL_CACHE_KEY, JSON.stringify(normalsByLocation));
+                    }
+                }
+
+                renderAll(byLocation, mb, normalsByLocation, offline, updatedAt);
             })();
         })();
     </script>
