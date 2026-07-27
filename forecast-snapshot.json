@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-27T11:11:04.597Z",
+ "updatedAt": "2026-07-27T11:14:40.238Z",
  "source": {
   "forecast": "ECMWF/IFS via open-meteo.com",
   "normals": "ERA5 2016-2025 via archive-api.open-meteo.com"
@@ -9673,49 +9673,49 @@
    "2026-07-27": {
     "temp_max": 25.19,
     "temp_min": 11.59,
-    "wind_max": 4.48,
+    "wind_max": 16.12,
     "precip_mm": 0,
     "precip_prob": 1
    },
    "2026-07-28": {
     "temp_max": 18.74,
     "temp_min": 13.43,
-    "wind_max": 4.81,
+    "wind_max": 17.32,
     "precip_mm": 29.1,
     "precip_prob": 28
    },
    "2026-07-29": {
     "temp_max": 23.94,
     "temp_min": 13.01,
-    "wind_max": 2.3,
+    "wind_max": 8.29,
     "precip_mm": 0,
     "precip_prob": 1
    },
    "2026-07-30": {
     "temp_max": 22.74,
     "temp_min": 13.51,
-    "wind_max": 1.39,
+    "wind_max": 5.02,
     "precip_mm": 0.83,
     "precip_prob": 44
    },
    "2026-07-31": {
     "temp_max": 21.59,
     "temp_min": 14.8,
-    "wind_max": 1.4,
+    "wind_max": 5.05,
     "precip_mm": 10.62,
     "precip_prob": 58
    },
    "2026-08-01": {
     "temp_max": 23.04,
     "temp_min": 15.58,
-    "wind_max": 0.9,
+    "wind_max": 3.23,
     "precip_mm": 0,
     "precip_prob": 57
    },
    "2026-08-02": {
     "temp_max": 24.06,
     "temp_min": 15.91,
-    "wind_max": 1.03,
+    "wind_max": 3.7,
     "precip_mm": 0,
     "precip_prob": 47
    }
