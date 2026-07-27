@@ -33,16 +33,29 @@ function readTripRows() {
 }
 
 async function fetchJson(url, label) {
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(url);
-    if (res.ok) return res.json();
-    // 429 = rate limit de l'API gratuite : on laisse retomber puis on réessaie.
-    if (res.status !== 429 && res.status < 500) {
-      throw new Error(`${label} a répondu ${res.status}`);
+  const ATTEMPTS = 5;
+  let lastErr;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+      // 429 = rate limit de l'API gratuite ; 5xx = incident passager. Le reste
+      // (400, 404...) ne s'arrangera pas en réessayant.
+      if (res.status !== 429 && res.status < 500) {
+        const fatal = new Error(`${label} a répondu ${res.status}`);
+        fatal.fatal = true;
+        throw fatal;
+      }
+      lastErr = new Error(`${label} a répondu ${res.status}`);
+    } catch (err) {
+      // fetch() lève sur coupure réseau/DNS, sans code HTTP : ces erreurs-là sont
+      // justement celles qu'il faut réessayer, pas laisser filer.
+      if (err.fatal) throw err;
+      lastErr = err;
     }
-    await sleep(3000 * (attempt + 1));
+    if (attempt < ATTEMPTS - 1) await sleep(4000 * (attempt + 1));
   }
-  throw new Error(`${label} : échec après 4 tentatives`);
+  throw new Error(`${label} : échec après ${ATTEMPTS} tentatives (${lastErr?.message})`);
 }
 
 // Ne garde que les dates du voyage et les heures 6-21 : c'est tout ce que l'UI
