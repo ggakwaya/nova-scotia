@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nova-scotia-v8';
+const CACHE_NAME = 'nova-scotia-v9';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

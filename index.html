@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..48,500..800&family=Spline+Sans:wght@300..600&family=Spline+Sans+Mono:wght@400..600&display=swap" rel="stylesheet">
     <style>
         /* ============================================================
-           « CARTE MARINE » — sea-chart identity for a Nova Scotia trip.
+           « CARTE MARINE » -- sea-chart identity for a Nova Scotia trip.
            Old template variable names kept (inline styles depend on them);
            values remapped to a nautical chart palette.
              --pine  = steel chart-blue (headings)   --pine-deep = title-block navy
@@ -41,7 +41,7 @@
             color-scheme: dark;
         }
 
-        /* LIGHT = "chart on linen" — cool sea-mist, never cream */
+        /* LIGHT = "chart on linen" -- cool sea-mist, never cream */
         body[data-theme="light"] {
             --bg: #dae7e7;
             --surface: #eff5f4;
@@ -216,6 +216,10 @@
         table.cal .none { font-style: italic; opacity: .8; }
         table.cal tr.coda td { background: var(--surface-2); }
         table.cal tr.coda .jr b { color: var(--slate); }
+        .velo-badge.ok { color: var(--slate); font-weight: 600; }
+        .velo-badge.warn { color: var(--amber); font-weight: 600; }
+        .velo-badge.bad { color: var(--clay); font-weight: 600; }
+        .velo-badge.pending { color: var(--ink-soft); font-style: italic; }
 
         /* ---- CARD GRIDS ---- */
         .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -301,7 +305,7 @@
         #map { touch-action: pan-y; }
         #map.map-active { touch-action: none; }
         .custom-map-icon { background: none; border: none; }
-        /* Tint the basemap toward the chart palette — tiles only, markers/routes untouched.
+        /* Tint the basemap toward the chart palette -- tiles only, markers/routes untouched.
            Grey/near-grey tiles carry no hue, so sepia() injects one, then hue-rotate() steers
            it to teal-navy and saturate() makes it read. Tuned per theme. */
         .leaflet-tile-pane { filter: brightness(.82) sepia(.5) hue-rotate(158deg) saturate(2) contrast(1.04); }
@@ -402,6 +406,7 @@
             <a href="#distances">Distances</a>
             <a href="#decor">Décor</a>
             <a href="#lexique">Lexique</a>
+            <a href="#velo">Vélo</a>
         </div>
     </nav>
 
@@ -435,7 +440,7 @@
                 </div>
             </div>
             <div class="callout">
-                <b>Réservations — tout est confirmé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits en dur (hôtel à Moncton + Airbnb à Kentville ×4) sont réservés. Détail des emplacements à la section <a class="map-link" href="#hebergement">Hébergements</a>.
+                <b>Réservations -- tout est confirmé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits en dur (hôtel à Moncton + Airbnb à Kentville ×4) sont réservés. Détail des emplacements à la section <a class="map-link" href="#hebergement">Hébergements</a>.
             </div>
         </div>
     </section>
@@ -468,7 +473,7 @@
                         <tr>
                             <td class="jr"><b>J2</b><span>Mar 28 juil</span></td>
                             <td data-l="Trajet">Moncton → Mira River P.P. · 520 km (~5 h 45, ~8 h 30)</td>
-                            <td class="ride" data-l="Attrait"><b>Baddeck</b> — musée Alexander Graham Bell (lieu historique national, ~2 h)</td>
+                            <td class="ride" data-l="Attrait"><b>Baddeck</b> -- musée Alexander Graham Bell (lieu historique national, ~2 h)</td>
                             <td data-l="Coucher">Camping Mira River</td>
                         </tr>
                         <tr>
@@ -486,19 +491,19 @@
                         <tr>
                             <td class="jr"><b>J5</b><span>Ven 31 juil</span></td>
                             <td data-l="Trajet">Boucle nord · 137 km (~2 h 50)</td>
-                            <td class="ride" data-l="Attrait">Exploration du secteur de la pointe — jusqu'à <b>Meat Cove</b></td>
+                            <td class="ride" data-l="Attrait">Exploration du secteur de la pointe -- jusqu'à <b>Meat Cove</b></td>
                             <td data-l="Coucher">Camping Broad Cove</td>
                         </tr>
                         <tr>
                             <td class="jr"><b>J6</b><span>Sam 1 août</span></td>
                             <td data-l="Trajet">Broad Cove → Chéticamp · 106 km (~2 h, ~5 h avec arrêts)</td>
-                            <td class="ride" data-l="Attrait"><b>Skyline Trail</b> — le belvédère du Cabot Trail</td>
+                            <td class="ride" data-l="Attrait"><b>Skyline Trail</b> -- le belvédère du Cabot Trail</td>
                             <td data-l="Coucher">Camping Chéticamp (empl. #81-83)</td>
                         </tr>
                         <tr>
                             <td class="jr"><b>J7</b><span>Dim 2 août</span></td>
                             <td data-l="Trajet">-</td>
-                            <td class="ride" data-l="Attrait">Journée Chéticamp — village acadien, côte du Cabot Trail</td>
+                            <td class="ride" data-l="Attrait">Journée Chéticamp -- village acadien, côte du Cabot Trail</td>
                             <td data-l="Coucher">Camping Chéticamp</td>
                         </tr>
                         <tr>
@@ -510,7 +515,7 @@
                         <tr>
                             <td class="jr"><b>J9</b><span>Mar 4 août</span></td>
                             <td data-l="Trajet">Kentville → Halifax · a/r 206 km</td>
-                            <td class="ride" data-l="Attrait"><b>Halifax</b> — citadelle, front de mer, cimetières du Titanic</td>
+                            <td class="ride" data-l="Attrait"><b>Halifax</b> -- citadelle, front de mer, cimetières du Titanic</td>
                             <td data-l="Coucher">Airbnb, Kentville</td>
                         </tr>
                         <tr>
@@ -522,19 +527,19 @@
                         <tr>
                             <td class="jr"><b>J11</b><span>Jeu 6 août</span></td>
                             <td data-l="Trajet">Kentville ↔ Clam Harbour · a/r 337 km</td>
-                            <td class="ride" data-l="Attrait"><b>Clam Harbour</b> — plages de sable blanc</td>
+                            <td class="ride" data-l="Attrait"><b>Clam Harbour</b> -- plages de sable blanc</td>
                             <td data-l="Coucher">Airbnb, Kentville</td>
                         </tr>
                         <tr>
                             <td class="jr"><b>J12</b><span>Ven 7 août</span></td>
                             <td data-l="Trajet">Kentville → baie de Fundy · 429 km (~4 h 45, ~6 h)</td>
-                            <td class="ride" data-l="Attrait"><b>Hopewell Rocks</b> — les « pots de fleurs » de la marée</td>
+                            <td class="ride" data-l="Attrait"><b>Hopewell Rocks</b> -- les « pots de fleurs » de la marée</td>
                             <td data-l="Coucher">Camping Point Wolfe (empl. G#33-34)</td>
                         </tr>
                         <tr>
                             <td class="jr"><b>J13</b><span>Sam 8 août</span></td>
                             <td data-l="Trajet">-</td>
-                            <td class="ride" data-l="Attrait">Parc national Fundy — sentiers côtiers, marée haute / marée basse</td>
+                            <td class="ride" data-l="Attrait">Parc national Fundy -- sentiers côtiers, marée haute / marée basse</td>
                             <td data-l="Coucher">Camping Point Wolfe</td>
                         </tr>
                         <tr class="coda">
@@ -581,7 +586,7 @@
                 </div>
                 <div class="rstop" data-n="5" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
                     <div class="grouplabel">J5 · Ven 31 juil</div>
-                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">La pointe nord — Meat Cove</h3>
+                    <h3 style="font-size:1.1rem;color:var(--pine);margin:2px 0 6px;">La pointe nord -- Meat Cove</h3>
                     <div class="drow"><span class="dv">Boucle libre (~137 km) jusqu'au bout de l'île, à <b>Meat Cove</b> : le camping le plus au nord de la Nouvelle-Écosse, falaises et baleines. · <a class="map-link" data-leg="drive-j5" href="#map-section">Carte 📍</a></span></div>
                 </div>
                 <div class="rstop" data-n="6" style="padding:16px 20px;border-bottom:1px solid var(--line-soft);">
@@ -626,21 +631,21 @@
                 <h2>Hébergements</h2>
                 <div class="note">campings & hôtels</div>
             </div>
-            <div class="grouplabel">Campings — tout réservé</div>
+            <div class="grouplabel">Campings -- tout réservé</div>
             <ul class="statuslist">
-                <li class="done"><b>Camping Mira River</b> — parc provincial · 28–29 juil (2 nuits) <span class="sub">Réservé · parks.novascotia.ca</span></li>
-                <li class="done"><b>Camping Broad Cove</b> — Ingonish, Hautes-Terres-du-Cap-Breton, empl. #99-101 · 30–31 juil <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
-                <li class="done"><b>Camping Chéticamp</b> — Hautes-Terres-du-Cap-Breton, empl. #81-83 · 1–2 août <span class="sub">Réservé · un emplacement tente + un avec service</span></li>
-                <li class="done"><b>Camping Point Wolfe</b> — parc national Fundy, empl. G#33-34 · 7–8 août <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
+                <li class="done"><b>Camping Mira River</b> -- parc provincial · 28–29 juil (2 nuits) <span class="sub">Réservé · parks.novascotia.ca</span></li>
+                <li class="done"><b>Camping Broad Cove</b> -- Ingonish, Hautes-Terres-du-Cap-Breton, empl. #99-101 · 30–31 juil <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
+                <li class="done"><b>Camping Chéticamp</b> -- Hautes-Terres-du-Cap-Breton, empl. #81-83 · 1–2 août <span class="sub">Réservé · un emplacement tente + un avec service</span></li>
+                <li class="done"><b>Camping Point Wolfe</b> -- parc national Fundy, empl. G#33-34 · 7–8 août <span class="sub">Réservé · reservation.pc.gc.ca</span></li>
             </ul>
-            <div class="grouplabel second">Hôtel & Airbnb — tout réservé</div>
+            <div class="grouplabel second">Hôtel & Airbnb -- tout réservé</div>
             <ul class="statuslist">
                 <li class="done"><b>Moncton</b> · 27 juil (1 nuit) <span class="sub">Réservé · ~250 $</span></li>
-                <li class="done"><b>Airbnb — Kentville</b> (vallée d'Annapolis) · 3–6 août (4 nuits) <span class="sub">Réservé · 1449 Lakewood Road, Kentville NS B4N 3V7 · base des excursions</span></li>
+                <li class="done"><b>Airbnb -- Kentville</b> (vallée d'Annapolis) · 3–6 août (4 nuits) <span class="sub">Réservé · 1449 Lakewood Road, Kentville NS B4N 3V7 · base des excursions</span></li>
                 <li class="done"><b>Retour</b> · nuit du 9 août à la maison <span class="sub">Fin du voyage</span></li>
             </ul>
             <div class="callout">
-                <b>Tout est réservé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits en dur (hôtel à Moncton, Airbnb à Kentville ×4) sont confirmées. Emplacements notés ci-dessus — garder les confirmations hors-ligne.
+                <b>Tout est réservé.</b> Les 4 campings (Mira River, Broad Cove, Chéticamp, Point Wolfe) et les 5 nuits en dur (hôtel à Moncton, Airbnb à Kentville ×4) sont confirmées. Emplacements notés ci-dessus -- garder les confirmations hors-ligne.
             </div>
         </div>
     </section>
@@ -705,47 +710,47 @@
             <div class="roadmap">
                 <div class="rstop" data-n="1">
                     <b>Québec → Moncton</b> · 745 km, ~7 h 45<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J1 — Transcanadienne 20 / 2 vers le Nouveau-Brunswick</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J1 -- Transcanadienne 20 / 2 vers le Nouveau-Brunswick</span><br>
                     <a class="trk-a" style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Quebec+City&destination=Moncton+NB&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j1" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="2">
                     <b>Moncton → Mira River (via Baddeck)</b> · 520 km, ~5 h 45<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J2 — pont de la Confédération non requis ; route 104 → chaussée de Canso → Cap-Breton</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J2 -- pont de la Confédération non requis ; route 104 → chaussée de Canso → Cap-Breton</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Moncton+NB&destination=Mira+River+Provincial+Park&waypoints=Baddeck+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j2" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="3">
                     <b>Mira → Forteresse de Louisbourg</b> · 31 km, ~0 h 40<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J3 — aller-retour dans la journée</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J3 -- aller-retour dans la journée</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Mira+River+Provincial+Park&destination=Fortress+of+Louisbourg&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j3" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="4">
                     <b>Mira → Broad Cove (Ingonish)</b> · 141 km, ~2 h 15<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J4 — entrée est du parc des Hautes-Terres</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J4 -- entrée est du parc des Hautes-Terres</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Mira+River+Provincial+Park&destination=Broad+Cove+Campground+Ingonish&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j4" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="5">
                     <b>Broad Cove → Chéticamp</b> · 106 km, ~2 h<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J6 — la moitié ouest du Cabot Trail, via Skyline Trail</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J6 -- la moitié ouest du Cabot Trail, via Skyline Trail</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Broad+Cove+Campground+Ingonish&destination=Cheticamp+Campground&waypoints=Skyline+Trail&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j6" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="6">
                     <b>Chéticamp → Kentville</b> · 458 km, ~5 h<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J8 — sortie du Cap-Breton vers la vallée d'Annapolis</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J8 -- sortie du Cap-Breton vers la vallée d'Annapolis</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Cheticamp+NS&destination=Kentville+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j8" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="7">
                     <b>Kentville → Lunenburg → Peggy's Cove</b> · boucle 321 km, ~4 h<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J10 — Route 3 / 333, la côte sud</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J10 -- Route 3 / 333, la côte sud</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Kentville+NS&destination=Kentville+NS&waypoints=Lunenburg+NS|Peggys+Cove+NS&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j10" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="8">
                     <b>Kentville → baie de Fundy (Point Wolfe)</b> · 429 km, ~4 h 45<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J12 — via Hopewell Rocks, puis parc national Fundy</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J12 -- via Hopewell Rocks, puis parc national Fundy</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Kentville+NS&destination=Point+Wolfe+Campground+Fundy&waypoints=Hopewell+Rocks&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j12" href="#map-section">Carte 📍</a>
                 </div>
                 <div class="rstop" data-n="9">
                     <b>Baie de Fundy → maison</b> · 750 km, ~7 h 30<br>
-                    <span style="font-size:12.5px;color:var(--ink-soft);">J14 — le grand retour</span><br>
+                    <span style="font-size:12.5px;color:var(--ink-soft);">J14 -- le grand retour</span><br>
                     <a style="font-size:12px;font-weight:600;color:var(--clay-deep);text-decoration:none;" href="https://www.google.com/maps/dir/?api=1&origin=Fundy+National+Park&destination=Quebec+City&travelmode=driving" target="_blank" rel="noopener">GMaps ↗</a> · <a class="map-link" data-leg="drive-j14" href="#map-section">Carte 📍</a>
                 </div>
             </div>
@@ -811,24 +816,24 @@
                 <h2>Le décor : histoire, géographie, géologie</h2>
                 <div class="note">au fil de l'itinéraire</div>
             </div>
-            <p style="max-width:68ch;color:var(--ink-soft);margin-bottom:26px;">Les notes suivent l'ordre du voyage — chaque escale a sa couche d'histoire, de la Nouvelle-France à l'Écosse des Highlands, et sa géologie, du plateau appalachien aux plus hautes marées du monde.</p>
+            <p style="max-width:68ch;color:var(--ink-soft);margin-bottom:26px;">Les notes suivent l'ordre du voyage -- chaque escale a sa couche d'histoire, de la Nouvelle-France à l'Écosse des Highlands, et sa géologie, du plateau appalachien aux plus hautes marées du monde.</p>
 
             <div class="grid2" style="gap:26px 22px;">
             <div class="terr">
                 <div class="tlabel">J2 · Baddeck</div>
                 <h3>Graham Bell & la mer intérieure du Bras d'Or</h3>
-                <p>Alexander Graham Bell, inventeur du téléphone, passa ses étés à <b>Beinn Bhreagh</b>, son domaine face à Baddeck. C'est sur la glace du <b>lac Bras d'Or</b> que son équipe fit voler le <b>Silver Dart</b> en février 1909 : le premier vol motorisé de l'Empire britannique. Le Bras d'Or lui-même est une curiosité — une <b>mer intérieure salée</b> au cœur de l'île, aujourd'hui réserve de biosphère de l'UNESCO, où l'eau douce des rivières se mêle à l'Atlantique.</p>
+                <p>Alexander Graham Bell, inventeur du téléphone, passa ses étés à <b>Beinn Bhreagh</b>, son domaine face à Baddeck. C'est sur la glace du <b>lac Bras d'Or</b> que son équipe fit voler le <b>Silver Dart</b> en février 1909 : le premier vol motorisé de l'Empire britannique. Le Bras d'Or lui-même est une curiosité -- une <b>mer intérieure salée</b> au cœur de l'île, aujourd'hui réserve de biosphère de l'UNESCO, où l'eau douce des rivières se mêle à l'Atlantique.</p>
             </div>
             <div class="terr">
                 <div class="tlabel">J3 · Louisbourg</div>
                 <h3>Louisbourg, verrou de la Nouvelle-France</h3>
-                <p>Quand le traité d'Utrecht (1713) cède l'Acadie continentale aux Britanniques, la France garde l'<b>Île Royale</b> (le Cap-Breton) et y bâtit Louisbourg pour verrouiller l'accès au Saint-Laurent et protéger la lucrative <b>pêche à la morue</b>. La place tombe une première fois en 1745 devant des miliciens de Nouvelle-Angleterre, est rendue par traité, puis assiégée et prise en <b>1758</b> par Amherst et un jeune <b>Wolfe</b> — répétition générale de la chute de Québec l'année suivante.</p>
-                <p>Les Britanniques rasent la forteresse. Dans les années 1960, un <b>quart de la ville a été reconstruit pierre par pierre</b> — un chantier qui a réemployé les mineurs de charbon de la région. C'est la plus grande reconstitution historique en Amérique du Nord.</p>
+                <p>Quand le traité d'Utrecht (1713) cède l'Acadie continentale aux Britanniques, la France garde l'<b>Île Royale</b> (le Cap-Breton) et y bâtit Louisbourg pour verrouiller l'accès au Saint-Laurent et protéger la lucrative <b>pêche à la morue</b>. La place tombe une première fois en 1745 devant des miliciens de Nouvelle-Angleterre, est rendue par traité, puis assiégée et prise en <b>1758</b> par Amherst et un jeune <b>Wolfe</b> -- répétition générale de la chute de Québec l'année suivante.</p>
+                <p>Les Britanniques rasent la forteresse. Dans les années 1960, un <b>quart de la ville a été reconstruit pierre par pierre</b> -- un chantier qui a réemployé les mineurs de charbon de la région. C'est la plus grande reconstitution historique en Amérique du Nord.</p>
             </div>
             <div class="terr">
                 <div class="tlabel">J4–J6 · Cabot Trail</div>
                 <h3>Les Hautes-Terres, plateau appalachien</h3>
-                <p>Le parc protège l'extrémité nord de la <b>chaîne des Appalaches</b> : un vieux plateau raboté par les glaciers, coiffé d'une <b>taïga de landes</b> battue par le vent, qui plonge d'un coup dans le golfe du Saint-Laurent le long de la <b>faille de l'Aspy</b>. Ouvert en 1932, le <b>Cabot Trail</b> (~300 km) épouse ces falaises ; on y croise orignaux et pygargues à tête blanche. Les colons <b>gaéliques d'Écosse</b>, arrivés après les Highland Clearances du début du XIX<sup>e</sup> siècle, ont donné son nom à la province — « Nouvelle-Écosse » — et leur langue survit encore dans les <b>ceilidhs</b>, les veillées de musique.</p>
+                <p>Le parc protège l'extrémité nord de la <b>chaîne des Appalaches</b> : un vieux plateau raboté par les glaciers, coiffé d'une <b>taïga de landes</b> battue par le vent, qui plonge d'un coup dans le golfe du Saint-Laurent le long de la <b>faille de l'Aspy</b>. Ouvert en 1932, le <b>Cabot Trail</b> (~300 km) épouse ces falaises ; on y croise orignaux et pygargues à tête blanche. Les colons <b>gaéliques d'Écosse</b>, arrivés après les Highland Clearances du début du XIX<sup>e</sup> siècle, ont donné son nom à la province -- « Nouvelle-Écosse » -- et leur langue survit encore dans les <b>ceilidhs</b>, les veillées de musique.</p>
             </div>
             <div class="terr">
                 <div class="tlabel">J6–J7 · Chéticamp</div>
@@ -838,12 +843,12 @@
             <div class="terr">
                 <div class="tlabel">J10 · Côte sud</div>
                 <h3>Lunenburg, le Bluenose & le granit de Peggy's Cove</h3>
-                <p><b>Lunenburg</b> est fondée en 1753 par des « <b>protestants étrangers</b> » — Allemands, Suisses, Montbéliardais — recrutés par la Couronne. Sa vieille ville colorée, la mieux préservée d'Amérique du Nord britannique, est <b>inscrite à l'UNESCO</b> depuis 1995 ; c'est le port d'attache du <b>Bluenose</b>, le voilier de course invaincu qui figure sur la pièce de dix cents canadienne. Plus près d'Halifax, le phare de <b>Peggy's Cove</b> se dresse sur un granit lisse et rose vieux de <b>~415 millions d'années</b>, poli par les glaciers et semé de blocs erratiques. Superbe — mais les rochers noirs mouillés par la houle sont mortels : on n'y descend pas.</p>
+                <p><b>Lunenburg</b> est fondée en 1753 par des « <b>protestants étrangers</b> » -- Allemands, Suisses, Montbéliardais -- recrutés par la Couronne. Sa vieille ville colorée, la mieux préservée d'Amérique du Nord britannique, est <b>inscrite à l'UNESCO</b> depuis 1995 ; c'est le port d'attache du <b>Bluenose</b>, le voilier de course invaincu qui figure sur la pièce de dix cents canadienne. Plus près d'Halifax, le phare de <b>Peggy's Cove</b> se dresse sur un granit lisse et rose vieux de <b>~415 millions d'années</b>, poli par les glaciers et semé de blocs erratiques. Superbe -- mais les rochers noirs mouillés par la houle sont mortels : on n'y descend pas.</p>
             </div>
             <div class="terr">
                 <div class="tlabel">J12–J13 · Baie de Fundy</div>
                 <h3>Les plus hautes marées du monde</h3>
-                <p>La baie a une longueur telle que sa <b>période d'oscillation naturelle (~13 h)</b> coïncide presque avec le cycle des marées (12 h 25) : l'onde entre en <b>résonance</b> et se creuse. Résultat, jusqu'à <b>16 m d'amplitude</b> à Burntcoat Head — un immeuble de cinq étages, deux fois par jour, et près de <b>160 milliards de tonnes d'eau</b> qui entrent et sortent à chaque marée.</p>
+                <p>La baie a une longueur telle que sa <b>période d'oscillation naturelle (~13 h)</b> coïncide presque avec le cycle des marées (12 h 25) : l'onde entre en <b>résonance</b> et se creuse. Résultat, jusqu'à <b>16 m d'amplitude</b> à Burntcoat Head -- un immeuble de cinq étages, deux fois par jour, et près de <b>160 milliards de tonnes d'eau</b> qui entrent et sortent à chaque marée.</p>
                 <p>À <b>Hopewell Rocks</b>, cette érosion a sculpté les « <b>pots de fleurs</b> », des piliers de grès coiffés d'épinettes : on marche à leur pied sur le fond de l'océan à marée basse, on y pagaie six heures plus tard. Le même phénomène pousse un <b>mascaret</b> (une vague de marée) à remonter les rivières de la région.</p>
             </div>
             </div>
@@ -877,11 +882,46 @@
                 <tr><td class="lt">P.N. Fundy</td><td class="ld">Deux fois par jour, l'océan se retire de 12 m et découvre le fond de la baie ; le reste du temps, forêt, chutes et l'un des ciels les plus noirs de l'Est (1948, J12–J13).</td></tr>
                 <tr><td class="lt">Lieu historique national (LHN)</td><td class="ld">L'histoire mise en scène : à Louisbourg, des figurants en costume de 1744 t'interpellent aux portes ; à Baddeck, les machines volantes de Bell veillent sur le lac du Silver Dart.</td></tr>
                 <tr><td class="lt">Laissez-passer Découverte</td><td class="ld">Une carte, tous les parcs et LHN du pays pendant un an. Avec 2 parcs + 2 LHN sur le trajet, il se rembourse avant même le Cap-Breton.</td></tr>
-                <tr><td class="lt">Forêt acadienne</td><td class="ld">Ni tout à fait boréale, ni tout à fait feuillue : un entre-deux rare (érable, bouleau jaune, pruche) qui a presque disparu ailleurs — Fundy en garde un fragment intact.</td></tr>
+                <tr><td class="lt">Forêt acadienne</td><td class="ld">Ni tout à fait boréale, ni tout à fait feuillue : un entre-deux rare (érable, bouleau jaune, pruche) qui a presque disparu ailleurs -- Fundy en garde un fragment intact.</td></tr>
                 <tr><td class="lt">Réserve de ciel étoilé</td><td class="ld">À Fundy, on bride l'éclairage pour rendre la nuit au ciel : par temps clair, la Voie lactée se lit à l'œil nu. Statut officiel depuis 2011.</td></tr>
-                <tr><td class="lt">oTENTik</td><td class="ld">Le camping sans monter la tente : une structure en A sur plancher de bois, vrais lits et poêle — la trouvaille de Parcs Canada entre la toile et le chalet.</td></tr>
+                <tr><td class="lt">oTENTik</td><td class="ld">Le camping sans monter la tente : une structure en A sur plancher de bois, vrais lits et poêle -- la trouvaille de Parcs Canada entre la toile et le chalet.</td></tr>
                 <tr><td class="lt">Barrens (landes)</td><td class="ld">Sur le plateau du Cap-Breton, le vent taille les épinettes en bonsaïs : un paysage subarctique à la latitude de Bordeaux.</td></tr>
             </table>
+        </div>
+    </section>
+
+    <!-- 11 - VÉLO -->
+    <section id="velo">
+        <div class="wrap">
+            <div class="sh">
+                <div class="num">11</div>
+                <h2>Vélo -- prévisions</h2>
+                <div class="note">ECMWF (Open-Meteo) · 24-48h à l'avance</div>
+            </div>
+            <p style="max-width:70ch;color:var(--ink-soft);margin-bottom:20px;">Conditions cyclables estimées pour chaque jour du séjour, à partir du modèle ECMWF. Alerte si vent ≥ 30 km/h, pluie ≥ 40% de proba (ou ≥ 1 mm), ou température &lt; 5 °C / &gt; 32 °C. Nécessite une connexion pour se mettre à jour ; sinon affiche la dernière donnée connue.</p>
+            <div class="calwrap">
+                <table class="cal" id="velo-table">
+                    <thead>
+                        <tr><th>Jour</th><th>Lieu</th><th>Prévision</th><th>Vélo</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr data-date="2026-07-27" data-lat="46.0878" data-lon="-64.7782"><td class="jr"><b>J1</b><span>Lun 27 juil</span></td><td data-l="Lieu">Moncton</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-07-28" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J2</b><span>Mar 28 juil</span></td><td data-l="Lieu">Mira River</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-07-29" data-lat="45.9836" data-lon="-60.1094"><td class="jr"><b>J3</b><span>Mer 29 juil</span></td><td data-l="Lieu">Mira River (Louisbourg)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-07-30" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J4</b><span>Jeu 30 juil</span></td><td data-l="Lieu">Broad Cove</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-07-31" data-lat="46.656" data-lon="-60.403"><td class="jr"><b>J5</b><span>Ven 31 juil</span></td><td data-l="Lieu">Broad Cove (Meat Cove)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-01" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J6</b><span>Sam 1 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-02" data-lat="46.648" data-lon="-60.949"><td class="jr"><b>J7</b><span>Dim 2 août</span></td><td data-l="Lieu">Chéticamp</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-03" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J8</b><span>Lun 3 août</span></td><td data-l="Lieu">Kentville</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-04" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J9</b><span>Mar 4 août</span></td><td data-l="Lieu">Kentville (Halifax)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-05" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J10</b><span>Mer 5 août</span></td><td data-l="Lieu">Kentville (Lunenburg)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-06" data-lat="45.0693" data-lon="-64.5089"><td class="jr"><b>J11</b><span>Jeu 6 août</span></td><td data-l="Lieu">Kentville (Clam Harbour)</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-07" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J12</b><span>Ven 7 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                        <tr data-date="2026-08-08" data-lat="45.548" data-lon="-65.013"><td class="jr"><b>J13</b><span>Sam 8 août</span></td><td data-l="Lieu">Baie de Fundy</td><td data-l="Prévision" class="velo-forecast">--</td><td data-l="Vélo" class="velo-badge pending">en attente</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="callout" id="velo-meta">Chargement des prévisions ECMWF…</div>
         </div>
     </section>
 
@@ -1148,6 +1188,131 @@
                 }, { rootMargin: '-52px 0px -55% 0px', threshold: [0.1, 0.5] });
                 sections.forEach(s => observer.observe(s));
             }
+        })();
+    </script>
+
+    <!-- VÉLO -- PRÉVISIONS ECMWF (+ CONSENSUS METEOBLUE OPTIONNEL) -->
+    <script>
+        (function() {
+            const table = document.getElementById('velo-table');
+            const meta = document.getElementById('velo-meta');
+            if (!table) return;
+            const rows = Array.from(table.querySelectorAll('tbody tr[data-lat]'));
+            const CACHE_KEY = 'nova-scotia-velo-ecmwf';
+            const MB_CACHE_KEY = 'nova-scotia-velo-meteoblue';
+
+            const locKey = (lat, lon) => lat + ',' + lon;
+
+            function bikeBadge(tmax, tmin, precipSum, precipProb, windMax) {
+                if ([tmax, tmin, precipSum, precipProb, windMax].some(v => v === null || v === undefined || Number.isNaN(v))) {
+                    return { icon: '--', label: 'n/a', cls: 'pending' };
+                }
+                const warnings = [];
+                if (windMax >= 30) warnings.push('vent');
+                if (precipProb >= 40 || precipSum >= 1) warnings.push('pluie');
+                if (tmin < 5 || tmax > 32) warnings.push('temp');
+                if (warnings.length === 0) return { icon: '✅', label: 'Favorable', cls: 'ok' };
+                if (warnings.length === 1) return { icon: '⚠️', label: 'À surveiller (' + warnings[0] + ')', cls: 'warn' };
+                return { icon: '❌', label: 'Déconseillé (' + warnings.join(', ') + ')', cls: 'bad' };
+            }
+
+            function renderRow(row, byLocation, mb) {
+                const lat = row.getAttribute('data-lat');
+                const lon = row.getAttribute('data-lon');
+                const date = row.getAttribute('data-date');
+                const data = byLocation[locKey(lat, lon)];
+                const forecastCell = row.querySelector('.velo-forecast');
+                const badgeCell = row.querySelector('.velo-badge');
+                if (!data || !data.time) {
+                    forecastCell.textContent = 'indisponible';
+                    badgeCell.textContent = 'n/a';
+                    badgeCell.className = 'velo-badge pending';
+                    return;
+                }
+                const idx = data.time.indexOf(date);
+                if (idx === -1) {
+                    forecastCell.textContent = 'hors fenêtre de prévision';
+                    badgeCell.textContent = '--';
+                    badgeCell.className = 'velo-badge pending';
+                    return;
+                }
+                const tmax = data.temperature_2m_max[idx];
+                const tmin = data.temperature_2m_min[idx];
+                const precipSum = data.precipitation_sum[idx];
+                const precipProb = data.precipitation_probability_max[idx];
+                const windMax = data.wind_speed_10m_max[idx];
+                forecastCell.textContent = Math.round(tmin) + '–' + Math.round(tmax) + ' °C · vent ' + Math.round(windMax) + ' km/h · pluie ' + Math.round(precipProb) + '%';
+                const badge = bikeBadge(tmax, tmin, precipSum, precipProb, windMax);
+                let text = badge.icon + ' ' + badge.label;
+                if (mb && mb.days && mb.days[date]) {
+                    const d = mb.days[date];
+                    const mbBadge = bikeBadge(d.temp_max, d.temp_min, d.precip_mm, d.precip_prob, d.wind_max);
+                    text += ' · MB ' + mbBadge.icon;
+                }
+                badgeCell.textContent = text;
+                badgeCell.className = 'velo-badge ' + badge.cls;
+            }
+
+            function renderAll(byLocation, mb, offline, updatedAt) {
+                rows.forEach(row => renderRow(row, byLocation, mb));
+                if (meta) {
+                    const ts = updatedAt ? new Date(updatedAt).toLocaleString('fr-CA') : 'inconnue';
+                    meta.textContent = offline
+                        ? 'Hors-ligne -- dernière prévision connue du ' + ts + '.'
+                        : 'Prévisions ECMWF mises à jour le ' + ts + (mb ? ' · consensus Meteoblue inclus' : '') + '.';
+                }
+            }
+
+            async function fetchLocation(lat, lon) {
+                const url = 'https://api.open-meteo.com/v1/ecmwf?latitude=' + lat + '&longitude=' + lon +
+                    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max' +
+                    '&timezone=auto&forecast_days=16';
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('ECMWF fetch failed: ' + res.status);
+                const json = await res.json();
+                return json.daily;
+            }
+
+            async function fetchMeteoblue() {
+                try {
+                    const res = await fetch('./bike-forecast.json', { cache: 'no-store' });
+                    if (!res.ok) return null;
+                    return await res.json();
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            (async function init() {
+                const uniqueLocs = Array.from(new Set(rows.map(r => locKey(r.getAttribute('data-lat'), r.getAttribute('data-lon')))));
+                let byLocation = {};
+                let offline = false;
+                let updatedAt = Date.now();
+                try {
+                    const results = await Promise.all(uniqueLocs.map(async key => {
+                        const [lat, lon] = key.split(',');
+                        return [key, await fetchLocation(lat, lon)];
+                    }));
+                    results.forEach(([key, daily]) => { byLocation[key] = daily; });
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, byLocation }));
+                } catch (e) {
+                    offline = true;
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        byLocation = parsed.byLocation;
+                        updatedAt = parsed.updatedAt;
+                    }
+                }
+                let mb = await fetchMeteoblue();
+                if (mb) {
+                    localStorage.setItem(MB_CACHE_KEY, JSON.stringify(mb));
+                } else if (offline) {
+                    const cachedMb = localStorage.getItem(MB_CACHE_KEY);
+                    if (cachedMb) mb = JSON.parse(cachedMb);
+                }
+                renderAll(byLocation, mb, offline, updatedAt);
+            })();
         })();
     </script>
 

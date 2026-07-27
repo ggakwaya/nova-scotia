@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "weather": {
+      "source": "mateeb11/weather-forecast",
+      "sourceType": "github",
+      "skillPath": "skills/weather/SKILL.md",
+      "computedHash": "a87c2ed8feb71bb7b18728737e5f5ebb9ab96ea1bfd5e188106736e7af626cae"
+    }
+  }
+}
