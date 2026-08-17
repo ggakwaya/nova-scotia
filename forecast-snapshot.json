@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-08-16T18:40:52.112Z",
+ "updatedAt": "2026-08-17T06:45:29.041Z",
  "source": {
   "forecast": "ECMWF/IFS via open-meteo.com",
   "normals": "ERA5 2016-2025 via archive-api.open-meteo.com"
